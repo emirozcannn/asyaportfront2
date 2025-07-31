@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import api from './api/backend';
+import { loginUser } from './api/supabaseAuth'; // Yol güncellendi
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -14,12 +13,33 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
     try {
-      await api.post('/Auth/login', { email, password });
+      console.log('Attempting login with:', { email, password: '***' });
+      
+      const result = await loginUser(email, password);
+      console.log('Login successful:', result);
+      
       // Giriş başarılıysa dashboard'a yönlendir
       navigate('/dashboard');
-    } catch (err: unknown) {
-      setError('Login failed. Please check your credentials.');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Daha detaylı hata mesajı
+      let errorMessage = 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
+      
+      // Hata mesajını doğrudan backend'den almak için err.message'i kullan
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.message.includes('500')) {
+        errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+      } else if (err.message.includes('401')) {
+        errorMessage = 'Email veya şifre hatalı.';
+      } else if (err.message.includes('Network')) {
+        errorMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
+      } 
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -39,6 +59,7 @@ const Login: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               required
               autoFocus
+              disabled={loading}
             />
           </div>
           <div className="mb-3">
@@ -49,13 +70,38 @@ const Login: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
-          {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
-          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-            {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+          {error && (
+            <div className="alert alert-danger py-2 mb-3" role="alert">
+              <small>{error}</small>
+            </div>
+          )}
+          <button 
+            type="submit" 
+            className="btn btn-primary w-100" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status">
+                  <span className="visually-hidden">Yükleniyor...</span>
+                </span>
+                Giriş yapılıyor...
+              </>
+            ) : (
+              'Giriş Yap'
+            )}
           </button>
         </form>
+        
+        {/* Debug bilgileri (geliştirme aşamasında) */}
+        <div className="mt-3">
+          <small className="text-muted">
+            API URL: {import.meta.env.VITE_API_BASE_URL || 'https://localhost:7190'}
+          </small>
+        </div>
       </div>
     </div>
   );
