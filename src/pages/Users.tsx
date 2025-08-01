@@ -1,110 +1,79 @@
-import React, { useState } from 'react';
-import { loginUser } from '../api/supabaseAuth'; // Yol güncellendi
-import { useNavigate } from 'react-router-dom';
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState('bt.mudur@asyaport.com');
-  const [password, setPassword] = useState('alper1emir');
+import React, { useEffect, useState } from 'react';
+import { fetchUsers } from '../api/supabaseUsers';
+import { fetchDepartments } from '../api/supabaseDepartments';
+import type { User } from '../types/User';
+import type { Department } from '../types/Department';
+
+const Users: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    try {
-      console.log('Attempting login with:', { email, password: '***' });
-      
-      const result = await loginUser(email, password);
-      console.log('Login successful:', result);
-      
-      // Giriş başarılıysa dashboard'a yönlendir
-      navigate('/dashboard');
-    } catch (err: any) {
-      console.error('Login error:', err);
-      
-      // Daha detaylı hata mesajı
-      let errorMessage = 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
-      
-      // Hata mesajını doğrudan backend'den almak için err.message'i kullan
-      if (err.message) {
-        errorMessage = err.message;
-      } else if (err.message.includes('500')) {
-        errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
-      } else if (err.message.includes('401')) {
-        errorMessage = 'Email veya şifre hatalı.';
-      } else if (err.message.includes('Network')) {
-        errorMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
-      } 
-      
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [usersData, departmentsData] = await Promise.all([
+          fetchUsers(),
+          fetchDepartments()
+        ]);
+        setUsers(usersData);
+        setDepartments(departmentsData);
+      } catch (err) {
+        setError('Kullanıcılar veya bölümler yüklenemedi.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
-    <div className="container d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
-      <div className="card shadow-sm p-4" style={{ minWidth: 350, maxWidth: 400, width: '100%' }}>
-        <h3 className="mb-4 text-center">Giriş Yap</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              className="form-control"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoFocus
-              disabled={loading}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Şifre</label>
-            <input
-              type="password"
-              className="form-control"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-          {error && (
-            <div className="alert alert-danger py-2 mb-3" role="alert">
-              <small>{error}</small>
-            </div>
-          )}
-          <button 
-            type="submit" 
-            className="btn btn-primary w-100" 
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status">
-                  <span className="visually-hidden">Yükleniyor...</span>
-                </span>
-                Giriş yapılıyor...
-              </>
-            ) : (
-              'Giriş Yap'
-            )}
-          </button>
-        </form>
-        
-        {/* Debug bilgileri (geliştirme aşamasında) */}
-        <div className="mt-3">
-          <small className="text-muted">
-            API URL: {import.meta.env.VITE_API_BASE_URL || 'https://localhost:7190'}
-          </small>
+    <div style={{ minHeight: '100vh', marginLeft: 220, background: 'none', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="card border-0 shadow-lg modern-card p-4 mb-4 w-100" style={{ borderRadius: 22, maxWidth: 1000, margin: '40px auto 0 auto' }}>
+        <h2 className="mb-4 text-center">Kullanıcılar</h2>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <div className="table-responsive" style={{ maxHeight: '75vh', overflowY: 'auto', overflowX: 'auto' }}>
+          <table className="table table-hover align-middle text-center mb-0 w-100" style={{ minWidth: 0 }}>
+            <thead className="align-middle">
+              <tr>
+                <th className="text-center">#</th>
+                <th className="text-center">Ad</th>
+                <th className="text-center">Soyad</th>
+                <th className="text-center">Email</th>
+                <th className="text-center">Çalışan No</th>
+                <th className="text-center">Bölüm</th>
+                <th className="text-center">Rol</th>
+                <th className="text-center">Oluşturulma Tarihi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={8} className="text-center">Yükleniyor...</td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={8} className="text-center">Kayıt yok</td></tr>
+              ) : (
+                users.map((u, i) => (
+                  <tr key={u.id}>
+                    <td className="text-center">{i + 1}</td>
+                    <td className="text-center">{u.first_name}</td>
+                    <td className="text-center">{u.last_name}</td>
+                    <td className="text-center">{u.email}</td>
+                    <td className="text-center">{u.employee_number}</td>
+                    <td className="text-center">{departments.find(d => d.id === u.department_id)?.name || '-'}</td>
+                    <td className="text-center">{u.role}</td>
+                    <td className="text-center">{u.created_at ? new Date(u.created_at).toLocaleDateString('tr-TR') : '-'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Users;

@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
-import { loginUser } from './api/supabaseAuth'; // Yol güncellendi
+import { loginUser } from './api/supabaseAuth';
 import { useNavigate } from 'react-router-dom';
+import logo from './assets/logo.png';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('bt.mudur@asyaport.com');
@@ -46,31 +48,37 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="container d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
-      <div className="card shadow-sm p-4" style={{ minWidth: 350, maxWidth: 400, width: '100%' }}>
-        <h3 className="mb-4 text-center">Giriş Yap</h3>
+    <div className="login-bg d-flex align-items-center justify-content-center">
+      <div className="login-card p-4 shadow-lg animate__animated animate__fadeIn">
+        <div className="text-center mb-4">
+          <img src={logo} alt="Asyaport Logo" style={{ width: 80, marginBottom: 8, borderRadius: 12 }} />
+          <h1 className="zimmet-title mb-1">Zimmet</h1>
+          <div className="text-muted mb-2" style={{ fontSize: 15 }}>Yönetim Paneli Girişi</div>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label">Email</label>
             <input
               type="email"
-              className="form-control"
+              className="form-control modern-input"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
               autoFocus
               disabled={loading}
+              placeholder="E-posta adresi"
             />
           </div>
           <div className="mb-3">
             <label className="form-label">Şifre</label>
             <input
               type="password"
-              className="form-control"
+              className="form-control modern-input"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
+              placeholder="Şifre"
             />
           </div>
           {error && (
@@ -80,8 +88,9 @@ const Login: React.FC = () => {
           )}
           <button 
             type="submit" 
-            className="btn btn-primary w-100" 
+            className="btn btn-primary w-100 py-2 fw-semibold rounded-pill" 
             disabled={loading}
+            style={{ fontSize: 17, letterSpacing: 0.5 }}
           >
             {loading ? (
               <>
@@ -95,13 +104,7 @@ const Login: React.FC = () => {
             )}
           </button>
         </form>
-        
-        {/* Debug bilgileri (geliştirme aşamasında) */}
-        <div className="mt-3">
-          <small className="text-muted">
-            API URL: {import.meta.env.VITE_API_BASE_URL || 'https://localhost:7190'}
-          </small>
-        </div>
+        {/* API URL kaldırıldı */}
       </div>
     </div>
   );
