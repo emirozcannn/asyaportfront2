@@ -10,8 +10,14 @@ interface NavbarProps {
 interface UserInfo {
   id?: string;
   email?: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   role?: string;
+  departmentId?: string;
+  employeeNumber?: string;
+  isActive?: boolean;
+  // Legacy support for old structure
+  name?: string;
   department?: string;
 }
 
@@ -95,9 +101,14 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
 
   // Helper functions for user display
   const getUserDisplayName = () => {
+    // Backend'den firstName ve lastName geliyorsa
+    if (userInfo.firstName && userInfo.lastName) {
+      return `${userInfo.firstName} ${userInfo.lastName}`;
+    }
+    // Legacy support - name field varsa
     if (userInfo.name) return userInfo.name;
+    // Email'den türet
     if (userInfo.email) {
-      // Extract name from email (before @)
       const emailPart = userInfo.email.split('@')[0];
       return emailPart.replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -105,6 +116,11 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
   };
 
   const getUserInitials = () => {
+    // firstName ve lastName varsa
+    if (userInfo.firstName && userInfo.lastName) {
+      return userInfo.firstName[0].toUpperCase() + userInfo.lastName[0].toUpperCase();
+    }
+    
     const displayName = getUserDisplayName();
     const words = displayName.split(' ');
     if (words.length >= 2) {
@@ -120,7 +136,22 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
   };
 
   const getUserRole = () => {
-    return userInfo.role || userInfo.department || 'Kullanıcı';
+    // Role mapping
+    const roleMap: { [key: string]: string } = {
+      'Admin': 'Sistem Yöneticisi',
+      'ZimmetManager': 'Zimmet Yöneticisi', 
+      'Employee': 'Çalışan',
+      'Manager': 'Yönetici'
+    };
+    
+    if (userInfo.role && roleMap[userInfo.role]) {
+      return roleMap[userInfo.role];
+    }
+    return userInfo.role || userInfo.department || 'Kullanıcı'; 
+  };
+
+  const getEmployeeNumber = () => {
+    return userInfo.employeeNumber || '';
   };
 
   const notifications = [
@@ -447,9 +478,18 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
                       <div>
                         <div className="fw-semibold text-dark">{getUserDisplayName()}</div>
                         <small className="text-muted">{getUserEmail()}</small>
-                        {getUserRole() !== 'Kullanıcı' && (
-                          <div className="badge bg-primary bg-opacity-10 text-primary mt-1" style={{ fontSize: '10px' }}>
-                            {getUserRole()}
+                        {(getUserRole() !== 'Kullanıcı' || getEmployeeNumber()) && (
+                          <div className="d-flex gap-1 mt-1">
+                            {getUserRole() !== 'Kullanıcı' && (
+                              <div className="badge bg-primary bg-opacity-10 text-primary" style={{ fontSize: '10px' }}>
+                                {getUserRole()}
+                              </div>
+                            )}
+                            {getEmployeeNumber() && (
+                              <div className="badge bg-secondary bg-opacity-10 text-secondary" style={{ fontSize: '10px' }}>
+                                {getEmployeeNumber()}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

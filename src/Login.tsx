@@ -68,16 +68,23 @@ const Login: React.FC = () => {
         localStorage.removeItem('rememberMe');
       }
       
-      // Store auth info with better user data structure
+      // Store auth info with backend data structure
       localStorage.setItem('authToken', result.token || 'temp-token');
       
-      // Create comprehensive user info object
+      // Backend'den gelen user data yapısına göre kaydet
       const userInfoToStore = {
-        id: result.user?.id || 'temp-id',
+        id: result.user?.id,
         email: result.user?.email || email,
-        name: result.user?.name || result.user?.userData?.name,
-        role: result.user?.role || result.user?.userData?.role,
-        department: result.user?.department || result.user?.userData?.department,
+        firstName: result.user?.firstName,
+        lastName: result.user?.lastName,
+        role: result.user?.role,
+        departmentId: result.user?.departmentId,
+        employeeNumber: result.user?.employeeNumber,
+        isActive: result.user?.isActive,
+        // Legacy support
+        name: result.user?.firstName && result.user?.lastName 
+          ? `${result.user.firstName} ${result.user.lastName}` 
+          : undefined,
         ...result.user // Include any other user data from backend
       };
       
