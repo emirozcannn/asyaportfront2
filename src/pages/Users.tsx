@@ -27,7 +27,6 @@ const Users: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -103,14 +102,25 @@ const Users: React.FC = () => {
             <h2 className="mb-1 fw-bold text-dark">Kullanıcı Yönetimi</h2>
             <p className="text-muted mb-0">Sistemdeki tüm kullanıcıları görüntüleyin ve yönetin</p>
           </div>
-          <button 
-            className="btn btn-primary btn-lg shadow-sm"
-            onClick={() => setShowAddModal(true)}
-            style={{ borderRadius: '12px' }}
-          >
-            <i className="bi bi-person-plus me-2"></i>
-            Yeni Kullanıcı
-          </button>
+          <div className="d-flex gap-2">
+            <button 
+              className="btn btn-outline-primary btn-lg shadow-sm"
+              onClick={loadData}
+              disabled={loading}
+              style={{ borderRadius: '12px' }}
+            >
+              <i className="bi bi-arrow-clockwise me-2"></i>
+              Yenile
+            </button>
+            <button 
+              className="btn btn-secondary btn-lg shadow-sm"
+              onClick={() => window.print()}
+              style={{ borderRadius: '12px' }}
+            >
+              <i className="bi bi-printer me-2"></i>
+              Yazdır
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}

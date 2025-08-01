@@ -38,7 +38,7 @@ const superAdminMenu: MenuItem[] = [
     text: 'Kullanıcı Yönetimi',
     children: [
       { text: 'Tüm Kullanıcılar', path: '/dashboard/users', icon: 'bi-person-lines-fill' },
-      { text: 'Yeni Kullanıcı Ekle', path: '/dashboard/users/new', icon: 'bi-person-plus' },
+      { text: 'Yeni Kullanıcı Ekle', path: '/dashboard/users/add', icon: 'bi-person-plus' },
       { text: 'Kullanıcı Rolleri', path: '/dashboard/users/roles', icon: 'bi-shield-check' },
       { text: 'Aktif/Pasif Durumu', path: '/dashboard/users/status', icon: 'bi-toggle-on' },
       { text: 'Toplu İşlemler', path: '/dashboard/users/bulk', icon: 'bi-stack' },
