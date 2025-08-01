@@ -7,14 +7,55 @@ interface NavbarProps {
   pageTitle?: string;
 }
 
+interface UserInfo {
+  id?: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  department?: string;
+}
+
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo>({});
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const quickActionsRef = useRef<HTMLDivElement>(null);
+
+  // Load user info from localStorage on component mount
+  useEffect(() => {
+    const loadUserInfo = () => {
+      try {
+        const storedUserInfo = localStorage.getItem('userInfo');
+        if (storedUserInfo) {
+          const parsedUserInfo = JSON.parse(storedUserInfo);
+          setUserInfo(parsedUserInfo);
+        } else {
+          // Fallback - try to get basic info from token or other sources
+          const email = localStorage.getItem('userEmail') || 'user@example.com';
+          setUserInfo({ email });
+        }
+      } catch (error) {
+        console.error('Error loading user info:', error);
+        setUserInfo({ email: 'user@example.com' });
+      }
+    };
+
+    loadUserInfo();
+
+    // Listen for storage changes (if user info is updated elsewhere)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userInfo') {
+        loadUserInfo();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Click outside to close dropdowns
   useEffect(() => {
@@ -37,6 +78,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('rememberedEmail');
     navigate('/login');
   };
 
@@ -48,6 +91,36 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
   const handleSettings = () => {
     navigate('/dashboard/settings');
     setShowUserMenu(false);
+  };
+
+  // Helper functions for user display
+  const getUserDisplayName = () => {
+    if (userInfo.name) return userInfo.name;
+    if (userInfo.email) {
+      // Extract name from email (before @)
+      const emailPart = userInfo.email.split('@')[0];
+      return emailPart.replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    return 'Kullanıcı';
+  };
+
+  const getUserInitials = () => {
+    const displayName = getUserDisplayName();
+    const words = displayName.split(' ');
+    if (words.length >= 2) {
+      return words[0][0].toUpperCase() + words[1][0].toUpperCase();
+    } else if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
+
+  const getUserEmail = () => {
+    return userInfo.email || 'user@example.com';
+  };
+
+  const getUserRole = () => {
+    return userInfo.role || userInfo.department || 'Kullanıcı';
   };
 
   const notifications = [
@@ -315,8 +388,12 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
                 {/* User Info (Desktop) */}
                 <div className="d-none d-lg-flex align-items-center gap-3">
                   <div className="text-end" style={{ lineHeight: '1.2' }}>
-                    <div className="fw-semibold text-dark" style={{ fontSize: '14px' }}>BT Müdürü</div>
-                    <small className="text-muted" style={{ fontSize: '12px' }}>bt.mudur@asyaport.com</small>
+                    <div className="fw-semibold text-dark" style={{ fontSize: '14px' }}>
+                      {getUserDisplayName()}
+                    </div>
+                    <small className="text-muted" style={{ fontSize: '12px' }}>
+                      {getUserEmail()}
+                    </small>
                   </div>
                   <div 
                     className="rounded-circle bg-gradient d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
@@ -327,7 +404,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
                       fontSize: '16px'
                     }}
                   >
-                    BM
+                    {getUserInitials()}
                   </div>
                   <i className="bi bi-chevron-down text-muted"></i>
                 </div>
@@ -365,11 +442,16 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
                           fontSize: '14px'
                         }}
                       >
-                        BM
+                        {getUserInitials()}
                       </div>
                       <div>
-                        <div className="fw-semibold text-dark">BT Müdürü</div>
-                        <small className="text-muted">bt.mudur@asyaport.com</small>
+                        <div className="fw-semibold text-dark">{getUserDisplayName()}</div>
+                        <small className="text-muted">{getUserEmail()}</small>
+                        {getUserRole() !== 'Kullanıcı' && (
+                          <div className="badge bg-primary bg-opacity-10 text-primary mt-1" style={{ fontSize: '10px' }}>
+                            {getUserRole()}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

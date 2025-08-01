@@ -68,9 +68,21 @@ const Login: React.FC = () => {
         localStorage.removeItem('rememberMe');
       }
       
-      // Store auth info
+      // Store auth info with better user data structure
       localStorage.setItem('authToken', result.token || 'temp-token');
-      localStorage.setItem('userInfo', JSON.stringify(result.user || { email }));
+      
+      // Create comprehensive user info object
+      const userInfoToStore = {
+        id: result.user?.id || 'temp-id',
+        email: result.user?.email || email,
+        name: result.user?.name || result.user?.userData?.name,
+        role: result.user?.role || result.user?.userData?.role,
+        department: result.user?.department || result.user?.userData?.department,
+        ...result.user // Include any other user data from backend
+      };
+      
+      localStorage.setItem('userInfo', JSON.stringify(userInfoToStore));
+      localStorage.setItem('userEmail', userInfoToStore.email); // Backup for email
       
       // Set success state instead of DOM manipulation
       setLoginSuccess(true);
