@@ -10,6 +10,8 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [loginSuccess, setLoginSuccess] = useState(false); // Yeni state
+  const [formShake, setFormShake] = useState(false); // Shake animasyonu için
   const navigate = useNavigate();
 
   // Network status monitoring
@@ -41,6 +43,8 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setLoginSuccess(false);
+    setFormShake(false);
     
     // Check network connectivity
     if (!isOnline) {
@@ -68,12 +72,8 @@ const Login: React.FC = () => {
       localStorage.setItem('authToken', result.token || 'temp-token');
       localStorage.setItem('userInfo', JSON.stringify(result.user || { email }));
       
-      // Success feedback
-      const successElement = document.querySelector('.btn-login') as HTMLElement;
-      if (successElement) {
-        successElement.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
-        successElement.innerHTML = '<i class="bi bi-check-circle me-2"></i>Giriş başarılı!';
-      }
+      // Set success state instead of DOM manipulation
+      setLoginSuccess(true);
       
       // Navigate to dashboard after a brief delay
       setTimeout(() => {
@@ -101,14 +101,11 @@ const Login: React.FC = () => {
       
       setError(errorMessage);
       
-      // Shake animation for error
-      const form = document.querySelector('.login-form') as HTMLElement;
-      if (form) {
-        form.style.animation = 'shake 0.5s ease-in-out';
-        setTimeout(() => {
-          form.style.animation = '';
-        }, 500);
-      }
+      // Shake animation using state instead of DOM manipulation
+      setFormShake(true);
+      setTimeout(() => {
+        setFormShake(false);
+      }, 500);
       
     } finally {
       setLoading(false);
@@ -254,7 +251,7 @@ const Login: React.FC = () => {
                 </div>
 
                 {/* Login Form */}
-                <form onSubmit={handleSubmit} className="login-form">
+                <form onSubmit={handleSubmit} className={`login-form ${formShake ? 'shake-animation' : ''}`}>
                   {error && (
                     <div className="alert alert-danger" role="alert">
                       <div className="d-flex align-items-center">
@@ -337,13 +334,18 @@ const Login: React.FC = () => {
 
                   <button 
                     type="submit" 
-                    className="btn btn-login w-100" 
+                    className={`btn w-100 ${loginSuccess ? 'btn-success' : 'btn-login'}`}
                     disabled={loading || !isOnline}
                   >
                     {loading ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2"></span>
                         Giriş yapılıyor...
+                      </>
+                    ) : loginSuccess ? (
+                      <>
+                        <i className="bi bi-check-circle me-2"></i>
+                        Giriş başarılı!
                       </>
                     ) : !isOnline ? (
                       <>
@@ -704,6 +706,16 @@ const Login: React.FC = () => {
           overflow: hidden;
         }
 
+        .btn-success {
+          background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+          border: none;
+          border-radius: 12px;
+          padding: 0.875rem 1.5rem;
+          font-size: 1rem;
+          font-weight: 600;
+          color: white;
+        }
+
         .btn-login::before {
           content: '';
           position: absolute;
@@ -820,6 +832,10 @@ const Login: React.FC = () => {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-5px); }
           75% { transform: translateX(5px); }
+        }
+
+        .shake-animation {
+          animation: shake 0.5s ease-in-out;
         }
 
         /* Responsive Design */
