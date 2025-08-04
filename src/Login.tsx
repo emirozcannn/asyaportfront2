@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loginUser } from './api/supabaseAuth';
+import { loginUser } from './api2/supabaseAuth';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {

@@ -5,7 +5,7 @@ const AssetTransfer: React.FC = () => {
     <div className="asset-transfer-page">
       <div className="container-fluid px-4 py-4">
         <h2 className="mb-1 fw-bold text-dark">Zimmet Transferi</h2>
-        <p className="text-muted">Zimmet transfer işlemleri</p>
+        <p className="text-muted">Zimmet öğelerini transfer edin</p>
         {/* İçerik buraya gelecek */}
       </div>
       <style>{`

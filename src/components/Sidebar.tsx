@@ -40,8 +40,9 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Tüm Kullanıcılar', path: '/dashboard/users', icon: 'bi-person-lines-fill' },
       { text: 'Yeni Kullanıcı Ekle', path: '/dashboard/users/add', icon: 'bi-person-plus' },
       { text: 'Kullanıcı Rolleri', path: '/dashboard/users/roles', icon: 'bi-shield-check' },
+      { text: 'Rol Yetkileri', path: '/dashboard/users/permissions', icon: 'bi-key' },
       { text: 'Aktif/Pasif Durumu', path: '/dashboard/users/status', icon: 'bi-toggle-on' },
-      { text: 'Toplu İşlemler', path: '/dashboard/users/bulk', icon: 'bi-stack' },
+      { text: 'Toplu İşlemler', path: '/dashboard/users/bulk-operations', icon: 'bi-stack' },
     ],
   },
   {
@@ -49,9 +50,9 @@ const superAdminMenu: MenuItem[] = [
     text: 'Departman Yönetimi',
     children: [
       { text: 'Tüm Departmanlar', path: '/dashboard/departments', icon: 'bi-diagram-3' },
-      { text: 'Yeni Departman', path: '/dashboard/departments/new', icon: 'bi-plus-circle' },
+      { text: 'Yeni Departman', path: '/dashboard/departments/add', icon: 'bi-plus-circle' },
       { text: 'Yetki Ayarları', path: '/dashboard/departments/permissions', icon: 'bi-key' },
-      { text: 'Admin Atama', path: '/dashboard/departments/admins', icon: 'bi-person-badge' },
+      { text: 'Admin Atama', path: '/dashboard/departments/admin-assignment', icon: 'bi-person-badge' },
       { text: 'Departman İstatistikleri', path: '/dashboard/departments/stats', icon: 'bi-graph-up' },
     ],
   },
@@ -61,12 +62,12 @@ const superAdminMenu: MenuItem[] = [
     children: [
       { text: 'Tüm Zimmetler', path: '/dashboard/assets', icon: 'bi-list-ul' },
       { text: 'Zimmet Kategorileri', path: '/dashboard/assets/categories', icon: 'bi-tags' },
-      { text: 'Yeni Zimmet Ekle', path: '/dashboard/assets/new', icon: 'bi-plus-square' },
+      { text: 'Yeni Zimmet Ekle', path: '/dashboard/assets/add', icon: 'bi-plus-square' },
       { text: 'Zimmet Transferi', path: '/dashboard/assets/transfer', icon: 'bi-arrow-left-right' },
-      { text: 'Stok Durumu', path: '/dashboard/assets/stock', icon: 'bi-boxes' },
+      { text: 'Stok Durumu', path: '/dashboard/assets/stock-status', icon: 'bi-boxes' },
       { text: 'Zimmet Durumları', path: '/dashboard/assets/status', icon: 'bi-check-circle' },
-      { text: 'Toplu İşlemler', path: '/dashboard/assets/bulk', icon: 'bi-collection' },
-      { text: 'QR Kod Oluştur', path: '/dashboard/assets/qr', icon: 'bi-qr-code' },
+      { text: 'Toplu İşlemler', path: '/dashboard/assets/bulk-operations', icon: 'bi-collection' },
+      { text: 'QR Kod Oluştur', path: '/dashboard/assets/qr-generator', icon: 'bi-qr-code' },
     ],
   },
   {
@@ -455,127 +456,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       `}</style>
     </>
   );
-};
-
-// Add icon fallback function
-const getIconFallback = (iconClass: string): string => {
-  const iconMap: { [key: string]: string } = {
-    // Main menu icons
-    'bi-speedometer2': '📊',
-    'bi-people': '👥',
-    'bi-building': '🏢',
-    'bi-box-seam': '📦',
-    'bi-clipboard-check': '📋',
-    'bi-arrow-repeat': '🔄',
-    'bi-bar-chart-line': '📈',
-    'bi-tools': '🔧',
-    'bi-geo-alt': '📍',
-    'bi-gear-fill': '⚙️',
-    'bi-shield-lock-fill': '🔒',
-    'bi-phone-vibrate': '📱',
-    'bi-people-fill': '👤',
-    'bi-currency-dollar': '💰',
-    'bi-question-circle-fill': '❓',
-    
-    // User Management icons
-    'bi-person-lines-fill': '👤',
-    'bi-person-plus': '➕',
-    'bi-shield-check': '🛡️',
-    'bi-toggle-on': '🔛',
-    'bi-stack': '📚',
-    
-    // Department Management icons
-    'bi-diagram-3': '🔗',
-    'bi-plus-circle': '➕',
-    'bi-key': '🔑',
-    'bi-person-badge': '🏷️',
-    'bi-graph-up': '📈',
-    
-    // Asset Management icons
-    'bi-list-ul': '📋',
-    'bi-tags': '🏷️',
-    'bi-plus-square': '➕',
-    'bi-arrow-left-right': '↔️',
-    'bi-boxes': '📦',
-    'bi-check-circle': '✅',
-    'bi-collection': '📁',
-    'bi-qr-code': '📱',
-    
-    // Request Management icons
-    'bi-hourglass-split': '⏳',
-    'bi-check-circle-fill': '✅',
-    'bi-x-circle-fill': '❌',
-    'bi-clock-history': '🕐',
-    'bi-exclamation-triangle-fill': '⚠️',
-    'bi-lightning': '⚡',
-    
-    // Return Management icons
-    'bi-arrow-return-left': '↩️',
-    'bi-check-all': '✅',
-    'bi-exclamation-diamond': '💎',
-    'bi-calendar-event': '📅',
-    'bi-bell': '🔔',
-    
-    // Reports & Analytics icons
-    'bi-pie-chart': '📊',
-    'bi-graph-up-arrow': '📈',
-    'bi-activity': '📊',
-    'bi-download': '⬇️',
-    
-    // Maintenance & Service icons
-    'bi-calendar-check': '📅',
-    'bi-journal-text': '📖',
-    'bi-wrench': '🔧',
-    'bi-shield-fill-check': '🛡️',
-    'bi-gear-wide-connected': '⚙️',
-    
-    // Location Management icons
-    'bi-map': '🗺️',
-    'bi-pin-map': '📍',
-    
-    // System Settings icons
-    'bi-sliders': '🎛️',
-    'bi-diagram-2': '📊',
-    'bi-check-square': '☑️',
-    'bi-bell-fill': '🔔',
-    'bi-envelope': '📧',
-    'bi-toggles': '🎛️',
-    'bi-cloud-download': '☁️',
-    
-    // Security & Audit icons
-    'bi-door-open': '🚪',
-    'bi-globe': '🌐',
-    'bi-person-check': '✅',
-    'bi-exclamation-triangle': '⚠️',
-    
-    // Mobile & Integration icons
-    'bi-qr-code-scan': '📱',
-    'bi-code-slash': '💻',
-    'bi-phone': '📱',
-    'bi-puzzle': '🧩',
-    
-    // HR icons
-    'bi-person-workspace': '👤',
-    'bi-box-arrow-in-right': '📥',
-    'bi-calendar-x': '📅',
-    
-    // Finance icons
-    'bi-calculator': '🧮',
-    'bi-graph-down': '📉',
-    'bi-piggy-bank': '🐷',
-    'bi-file-earmark-text': '📄',
-    'bi-cart-plus': '🛒',
-    
-    // Help & Support icons
-    'bi-book': '📚',
-    'bi-journal-bookmark': '📖',
-    'bi-play-circle': '▶️',
-    'bi-question-circle': '❓',
-    'bi-headset': '🎧',
-    'bi-chat-square-dots': '💬',
-  };
-  
-  return iconMap[iconClass] || '•';
 };
 
 export default Sidebar;

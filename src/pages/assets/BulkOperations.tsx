@@ -4,8 +4,8 @@ const BulkOperations: React.FC = () => {
   return (
     <div className="bulk-operations-page">
       <div className="container-fluid px-4 py-4">
-        <h2 className="mb-1 fw-bold text-dark">Toplu İşlemler</h2>
-        <p className="text-muted">Zimmet toplu işlemleri gerçekleştirin</p>
+        <h2 className="mb-1 fw-bold text-dark">Toplu Zimmet İşlemleri</h2>
+        <p className="text-muted">Birden fazla zimmet öğesi üzerinde toplu işlemler yapın</p>
         {/* İçerik buraya gelecek */}
       </div>
       <style>{`

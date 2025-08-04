@@ -4,7 +4,7 @@ const QRGenerator: React.FC = () => {
   return (
     <div className="qr-generator-page">
       <div className="container-fluid px-4 py-4">
-        <h2 className="mb-1 fw-bold text-dark">QR Kod Oluştur</h2>
+        <h2 className="mb-1 fw-bold text-dark">QR Kod Oluşturucu</h2>
         <p className="text-muted">Zimmet öğeleri için QR kod oluşturun</p>
         {/* İçerik buraya gelecek */}
       </div>

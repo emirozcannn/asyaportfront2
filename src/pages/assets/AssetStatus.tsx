@@ -5,7 +5,7 @@ const AssetStatus: React.FC = () => {
     <div className="asset-status-page">
       <div className="container-fluid px-4 py-4">
         <h2 className="mb-1 fw-bold text-dark">Zimmet Durumları</h2>
-        <p className="text-muted">Zimmet durumlarını yönetin</p>
+        <p className="text-muted">Zimmet durumlarını görüntüleyin ve yönetin</p>
         {/* İçerik buraya gelecek */}
       </div>
       <style>{`
