@@ -1,14 +1,14 @@
-// src/api/users/getUserById.ts
+// src/api/users/getUserByEmail.ts
 import { getAuthHeaders } from '../auth/utils';
 import type { User } from '../types/user';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190';
 
-export async function getUserById(id: string): Promise<User> {
+export async function getUserByEmail(email: string): Promise<User> {
   try {
     const headers = getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/api/Users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Users/email/${encodeURIComponent(email)}`, {
       method: 'GET',
       headers,
     });
@@ -24,7 +24,7 @@ export async function getUserById(id: string): Promise<User> {
     const user = await response.json();
     return user;
   } catch (error) {
-    console.error('Get user by id error:', error);
+    console.error('Get user by email error:', error);
     throw error;
   }
 }

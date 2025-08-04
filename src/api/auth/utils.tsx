@@ -8,10 +8,10 @@ export function isAuthenticated(): boolean {
   return !!token;
 }
 
-export function getUserFromStorage(): any | null {
+export function getUserFromStorage(): Record<string, unknown> | null {
   try {
     const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    return userStr ? JSON.parse(userStr) as Record<string, unknown> : null;
   } catch (error) {
     console.error('Error parsing user from storage:', error);
     return null;
@@ -26,7 +26,7 @@ export function clearAuthData(): void {
 // Auth durumu kontrolü için hook benzeri fonksiyon
 export function checkAuthStatus(): {
   isAuthenticated: boolean;
-  user: any | null;
+  user: Record<string, unknown> | null;
   token: string | null;
 } {
   const token = localStorage.getItem('authToken');

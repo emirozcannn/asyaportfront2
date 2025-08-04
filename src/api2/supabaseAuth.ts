@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseConfig';
-import type { User } from '../types/User';
+
 
 // Environment değişkeni üzerinden backend API URL'sini al
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190';

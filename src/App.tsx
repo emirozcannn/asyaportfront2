@@ -7,7 +7,7 @@ import Layout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 
 // Users
-import Users from './pages/users/Users';
+import Users from './pages//users/Users';
 import UserRoles from './pages/users/UserRoles';
 import AddUser from './pages/users/AddUser';
 import RolePermissions from './pages/users/RolePermissions';
