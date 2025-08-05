@@ -295,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </div>
             <div className="text-center">
               <div className="fw-bold text mb-1" style={{ fontSize: '16px', letterSpacing: '0.5px' }}>
-                AsyaPort Zimmet Paneli
+                Asyaport Zimmet Paneli
               </div>
               <div className="text text-opacity-75" style={{ fontSize: '12px' }}>
                 Admin Paneli
