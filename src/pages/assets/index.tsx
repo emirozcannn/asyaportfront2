@@ -1,6 +1,6 @@
-import type { Asset, AssetDto, AssetFilter } from '../types/assets';
+import type { Asset, AssetDto, AssetFilter } from '../../api/types/assets';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://localhost:7190/api';
 
 // HTTP helper fonksiyonu
 const apiRequest = async <T>(
@@ -46,7 +46,7 @@ const apiRequest = async <T>(
 export const assetsApi = {
   // Tüm asset'ları getir
   getAll: async (filter?: AssetFilter): Promise<Asset[]> => {
-    let endpoint = '/api/Assets';
+    let endpoint = '/Assets';
     
     // Filter parametrelerini query string'e çevir
     if (filter) {
@@ -67,12 +67,12 @@ export const assetsApi = {
 
   // ID'ye göre asset getir
   getById: async (id: string): Promise<Asset> => {
-    return apiRequest<Asset>(`/api/Assets/${id}`);
+    return apiRequest<Asset>(`/Assets/${id}`);
   },
 
   // Yeni asset oluştur
   create: async (assetDto: AssetDto): Promise<Asset> => {
-    return apiRequest<Asset>('/api/Assets', {
+    return apiRequest<Asset>('/Assets', {
       method: 'POST',
       body: JSON.stringify(assetDto),
     });
@@ -80,7 +80,7 @@ export const assetsApi = {
 
   // Asset güncelle
   update: async (id: string, assetDto: AssetDto): Promise<Asset> => {
-    return apiRequest<Asset>(`/api/Assets/${id}`, {
+    return apiRequest<Asset>(`/Assets/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ ...assetDto, id }),
     });
@@ -88,14 +88,14 @@ export const assetsApi = {
 
   // Asset sil
   delete: async (id: string): Promise<void> => {
-    return apiRequest<void>(`/api/Assets/${id}`, {
+    return apiRequest<void>(`/Assets/${id}`, {
       method: 'DELETE',
     });
   },
 
   // Asset durumunu güncelle
   updateStatus: async (id: string, newStatus: string): Promise<void> => {
-    return apiRequest<void>(`/api/AssetStatus/${id}`, {
+    return apiRequest<void>(`/AssetStatus/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ newStatus }),
     });
@@ -103,33 +103,33 @@ export const assetsApi = {
 
   // Asset arama
   search: async (searchTerm: string): Promise<Asset[]> => {
-    return apiRequest<Asset[]>(`/api/Assets?search=${encodeURIComponent(searchTerm)}`);
+    return apiRequest<Asset[]>(`/Assets?search=${encodeURIComponent(searchTerm)}`);
   },
 
   // Kategoriye göre asset'ları getir
   getByCategory: async (categoryId: string): Promise<Asset[]> => {
-    return apiRequest<Asset[]>(`/api/Assets?categoryId=${categoryId}`);
+    return apiRequest<Asset[]>(`/Assets?categoryId=${categoryId}`);
   },
 
   // Kullanıcıya atanmış asset'ları getir
   getAssignedToUser: async (userId: string): Promise<Asset[]> => {
-    return apiRequest<Asset[]>(`/api/Assets?assignedToId=${userId}`);
+    return apiRequest<Asset[]>(`/Assets?assignedToId=${userId}`);
   },
 
   // Müsait asset'ları getir
   getAvailable: async (): Promise<Asset[]> => {
-    return apiRequest<Asset[]>('/api/Assets?status=Available');
+    return apiRequest<Asset[]>('/Assets?status=Available');
   },
 
   // Atanmış asset'ları getir
   getAssigned: async (): Promise<Asset[]> => {
-    return apiRequest<Asset[]>('/api/Assets?status=Assigned');
+    return apiRequest<Asset[]>('/Assets?status=Assigned');
   },
 
   // Asset istatistiklerini getir (bu endpoint backend'de yoksa eklenebilir)
   getStats: async (): Promise<any> => {
     try {
-      return apiRequest<any>('/api/Assets/stats');
+      return apiRequest<any>('/Assets/stats');
     } catch (error) {
       // Eğer stats endpoint'i yoksa, tüm asset'ları çekip hesapla
       const assets = await assetsApi.getAll();
