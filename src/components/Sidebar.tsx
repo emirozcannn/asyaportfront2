@@ -42,7 +42,7 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Kullanıcı Rolleri', path: '/dashboard/users/roles', icon: 'bi-shield-check' },
       { text: 'Rol Yetkileri', path: '/dashboard/users/permissions', icon: 'bi-key' },
       { text: 'Aktif/Pasif Durumu', path: '/dashboard/users/status', icon: 'bi-toggle-on' },
-      { text: 'Toplu İşlemler', path: '/dashboard/users/bulk-operations', icon: 'bi-stack' },
+   
     ],
   },
   {
@@ -52,8 +52,7 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Tüm Departmanlar', path: '/dashboard/departments', icon: 'bi-diagram-3' },
       { text: 'Yeni Departman', path: '/dashboard/departments/add', icon: 'bi-plus-circle' },
       { text: 'Yetki Ayarları', path: '/dashboard/departments/permissions', icon: 'bi-key' },
-      { text: 'Admin Atama', path: '/dashboard/departments/admin-assignment', icon: 'bi-person-badge' },
-      { text: 'Departman İstatistikleri', path: '/dashboard/departments/stats', icon: 'bi-graph-up' },
+    
     ],
   },
   {
@@ -66,7 +65,6 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Zimmet Transferi', path: '/dashboard/assets/transfer', icon: 'bi-arrow-left-right' },
       { text: 'Stok Durumu', path: '/dashboard/assets/stock-status', icon: 'bi-boxes' },
       { text: 'Zimmet Durumları', path: '/dashboard/assets/status', icon: 'bi-check-circle' },
-      { text: 'Toplu İşlemler', path: '/dashboard/assets/bulk-operations', icon: 'bi-collection' },
       { text: 'QR Kod Oluştur', path: '/dashboard/assets/qr-generator', icon: 'bi-qr-code' },
     ],
   },
@@ -80,7 +78,7 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Reddedilen Talepler', path: '/dashboard/requests/rejected', icon: 'bi-x-circle-fill' },
       { text: 'Talep Geçmişi', path: '/dashboard/requests/history', icon: 'bi-clock-history' },
       { text: 'Acil Talepler', path: '/dashboard/requests/urgent', icon: 'bi-exclamation-triangle-fill' },
-      { text: 'Otomatik Onaylar', path: '/dashboard/requests/auto-approve', icon: 'bi-lightning' },
+    
     ],
   },
  
@@ -88,14 +86,12 @@ const superAdminMenu: MenuItem[] = [
     icon: 'bi-bar-chart-line',
     text: 'Raporlar & Analitik',
     children: [
-      { text: 'Genel Dashboard', path: '/dashboard/reports/overview', icon: 'bi-pie-chart' },
+   
       { text: 'Departman Raporları', path: '/dashboard/reports/departments', icon: 'bi-building' },
       { text: 'Kullanıcı Raporları', path: '/dashboard/reports/users', icon: 'bi-person-lines-fill' },
       { text: 'Zimmet İstatistikleri', path: '/dashboard/reports/assets', icon: 'bi-graph-up-arrow' },
       { text: 'Maliyet Analizleri', path: '/dashboard/reports/costs', icon: 'bi-currency-dollar' },
-      { text: 'Kullanım Analizi', path: '/dashboard/reports/usage', icon: 'bi-activity' },
-      { text: 'Trend Analizleri', path: '/dashboard/reports/trends', icon: 'bi-graph-up' },
-      { text: 'Excel/PDF Export', path: '/dashboard/reports/export', icon: 'bi-download' },
+  
     ],
   },
   {
@@ -105,7 +101,7 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Bakım Takvimi', path: '/dashboard/maintenance/calendar', icon: 'bi-calendar-check' },
       { text: 'Bakım Geçmişi', path: '/dashboard/maintenance/history', icon: 'bi-journal-text' },
       { text: 'Servis Talepleri', path: '/dashboard/maintenance/service', icon: 'bi-wrench' },
-      { text: 'Garanti Takibi', path: '/dashboard/maintenance/warranty', icon: 'bi-shield-fill-check' },
+    
       { text: 'Yedek Parça Yönetimi', path: '/dashboard/maintenance/parts', icon: 'bi-gear-wide-connected' },
     ],
   },
@@ -131,35 +127,24 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Kullanıcı Aktiviteleri', path: '/dashboard/security/activity', icon: 'bi-activity' },
       { text: 'Sistem Erişim Logları', path: '/dashboard/security/access', icon: 'bi-door-open' },
       { text: 'Yetki Değişiklik Geçmişi', path: '/dashboard/security/roles-history', icon: 'bi-clock-history' },
-      { text: 'IP Kısıtlamaları', path: '/dashboard/security/ip-restrictions', icon: 'bi-globe' },
-      { text: 'Oturum Yönetimi', path: '/dashboard/security/sessions', icon: 'bi-person-check' },
+    
+   
       { text: 'Güvenlik Politikaları', path: '/dashboard/security/policies', icon: 'bi-shield-check' },
-      { text: 'Şüpheli Aktiviteler', path: '/dashboard/security/suspicious', icon: 'bi-exclamation-triangle' },
+
     ],
   },
   {
     icon: 'bi-phone-vibrate',
     text: 'Mobil & Entegrasyon',
     children: [
-      { text: 'QR Kod Yönetimi', path: '/dashboard/integration/qr', icon: 'bi-qr-code-scan' },
-      { text: 'API Yönetimi', path: '/dashboard/integration/api', icon: 'bi-code-slash' },
+ 
       { text: 'Mobil Uygulama Ayarları', path: '/dashboard/integration/mobile', icon: 'bi-phone' },
       { text: 'Webhook Ayarları', path: '/dashboard/integration/webhooks', icon: 'bi-arrow-repeat' },
       { text: 'Üçüncü Parti Entegrasyonlar', path: '/dashboard/integration/third-party', icon: 'bi-puzzle' },
       { text: 'Push Bildirimler', path: '/dashboard/integration/push', icon: 'bi-bell-fill' },
     ],
   },
-  {
-    icon: 'bi-people-fill',
-    text: 'İnsan Kaynakları',
-    children: [
-      { text: 'Personel Zimmet Özeti', path: '/dashboard/hr/employee-summary', icon: 'bi-person-workspace' },
-      { text: 'Giriş/Çıkış İşlemleri', path: '/dashboard/hr/onboarding', icon: 'bi-box-arrow-in-right' },
-      { text: 'Departman Transferleri', path: '/dashboard/hr/transfers', icon: 'bi-arrow-left-right' },
-      { text: 'Performans Takibi', path: '/dashboard/hr/performance', icon: 'bi-graph-up' },
-      { text: 'İzin/Tatil Yönetimi', path: '/dashboard/hr/leave', icon: 'bi-calendar-x' },
-    ],
-  },
+
   
   {
     icon: 'bi-question-circle-fill',

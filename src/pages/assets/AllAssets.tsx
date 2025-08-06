@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Asset, AssetFilter } from '../../api/types/assets';
 import { assetsApi } from '../../api/assets';
 import { categoriesApi } from '../../api/assets/categories';
-import { bulkOperationsApi } from '../../api/assets/bulkOperations';
+
 
 
 interface AssetFilters {
@@ -71,9 +71,7 @@ const DeleteConfirmationModal: React.FC<{
   onClose: () => void;
   onConfirm: () => void;
   assetName?: string;
-  isMultiple?: boolean;
-  count?: number;
-}> = ({ show, onClose, onConfirm, assetName, isMultiple = false, count = 1 }) => {
+}> = ({ show, onClose, onConfirm, assetName }) => {
   if (!show) return null;
 
   return (
@@ -89,10 +87,7 @@ const DeleteConfirmationModal: React.FC<{
           </div>
           <div className="modal-body">
             <p className="mb-3">
-              {isMultiple 
-                ? `Seçili ${count} asset'i kalıcı olarak silmek istediğinizden emin misiniz?`
-                : `"${assetName}" asset'ini kalıcı olarak silmek istediğinizden emin misiniz?`
-              }
+              "{assetName}" asset'ini kalıcı olarak silmek istediğinizden emin misiniz?
             </p>
             <div className="alert alert-warning mb-0">
               <i className="bi bi-info-circle me-2"></i>
@@ -105,7 +100,7 @@ const DeleteConfirmationModal: React.FC<{
             </button>
             <button type="button" className="btn btn-danger" onClick={onConfirm}>
               <i className="bi bi-trash me-1"></i>
-              {isMultiple ? 'Tümünü Sil' : 'Sil'}
+              Sil
             </button>
           </div>
         </div>
@@ -120,7 +115,6 @@ const AllAssets: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid' | 'cards'>('table');
   const [operationLoading, setOperationLoading] = useState(false);
   
@@ -136,8 +130,6 @@ const AllAssets: React.FC = () => {
     show: boolean;
     assetId?: string;
     assetName?: string;
-    isMultiple?: boolean;
-    assetIds?: string[];
   }>({ show: false });
   
   const [filters, setFilters] = useState<AssetFilters>({
@@ -225,23 +217,6 @@ const AllAssets: React.FC = () => {
     loadCategories();
   }, [filters]);
 
-  // Asset selection
-  const handleAssetSelect = (assetId: string) => {
-    setSelectedAssets(prev => 
-      prev.includes(assetId) 
-        ? prev.filter(id => id !== assetId)
-        : [...prev, assetId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedAssets.length === assets.length) {
-      setSelectedAssets([]);
-    } else {
-      setSelectedAssets(assets.map(asset => asset.id));
-    }
-  };
-
   // Filter handlers
   const handleSearch = (searchTerm: string) => {
     setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
@@ -278,7 +253,6 @@ const AllAssets: React.FC = () => {
       
       showToast('success', `Asset "${deleteModal.assetName}" başarıyla silindi`);
       await loadAssets();
-      setSelectedAssets(prev => prev.filter(id => id !== deleteModal.assetId));
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Asset silinirken hata oluştu';
@@ -286,93 +260,6 @@ const AllAssets: React.FC = () => {
     } finally {
       setOperationLoading(false);
       setDeleteModal({ show: false });
-    }
-  };
-
-  // Bulk operations
-  const handleBulkDelete = () => {
-    if (selectedAssets.length === 0) {
-      showToast('warning', 'Lütfen silmek istediğiniz asset(ları) seçin');
-      return;
-    }
-    
-    setDeleteModal({ 
-      show: true, 
-      isMultiple: true, 
-      assetIds: selectedAssets 
-    });
-  };
-
-  const confirmBulkDelete = async () => {
-    if (!deleteModal.assetIds || deleteModal.assetIds.length === 0) return;
-
-    try {
-      setOperationLoading(true);
-      const result = await bulkOperationsApi.bulkDelete(deleteModal.assetIds);
-      
-      if (result.success) {
-        showToast('success', `${result.processedCount} asset başarıyla silindi`);
-        await loadAssets();
-        setSelectedAssets([]);
-      } else {
-        showToast('error', `İşlem başarısız: ${result.errorCount} hata`);
-      }
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Toplu silme işlemi sırasında hata oluştu';
-      showToast('error', errorMessage);
-    } finally {
-      setOperationLoading(false);
-      setDeleteModal({ show: false });
-    }
-  };
-
-  const handleBulkAction = async (action: string) => {
-    if (selectedAssets.length === 0) {
-      showToast('warning', 'Lütfen işlem yapılacak asset(ları) seçin');
-      return;
-    }
-    
-    try {
-      setOperationLoading(true);
-      let result;
-      
-      switch (action) {
-        case 'bulk_transfer':
-          navigate(`/dashboard/assets/bulk-operations?operation=transfer&assets=${selectedAssets.join(',')}`);
-          return;
-          
-        case 'bulk_assign':
-          navigate(`/dashboard/assets/bulk-operations?operation=assign&assets=${selectedAssets.join(',')}`);
-          return;
-          
-        case 'bulk_maintenance':
-          result = await bulkOperationsApi.bulkUpdateStatus(selectedAssets, 'Maintenance');
-          showToast('success', `${result.processedCount} asset bakıma alındı`);
-          break;
-          
-        case 'bulk_available':
-          result = await bulkOperationsApi.bulkUpdateStatus(selectedAssets, 'Available');
-          showToast('success', `${result.processedCount} asset müsait duruma getirildi`);
-          break;
-          
-        case 'bulk_delete':
-          handleBulkDelete();
-          return;
-          
-        default:
-          console.log('Unknown bulk action:', action);
-          return;
-      }
-      
-      await loadAssets();
-      setSelectedAssets([]);
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Toplu işlem sırasında hata oluştu';
-      showToast('error', errorMessage);
-    } finally {
-      setOperationLoading(false);
     }
   };
 
@@ -417,10 +304,8 @@ const AllAssets: React.FC = () => {
       <DeleteConfirmationModal
         show={deleteModal.show}
         onClose={() => setDeleteModal({ show: false })}
-        onConfirm={deleteModal.isMultiple ? confirmBulkDelete : confirmDeleteAsset}
+        onConfirm={confirmDeleteAsset}
         assetName={deleteModal.assetName}
-        isMultiple={deleteModal.isMultiple}
-        count={deleteModal.assetIds?.length}
       />
 
       {/* Header */}
@@ -605,69 +490,12 @@ const AllAssets: React.FC = () => {
         </div>
       </div>
 
-      {/* View Mode & Bulk Actions */}
+      {/* View Mode */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div className="d-flex align-items-center">
-          <div className="form-check me-3">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              checked={selectedAssets.length === assets.length && assets.length > 0}
-              onChange={handleSelectAll}
-            />
-          </div>
           <span className="fw-medium me-3">
-            {pagination.total} asset {selectedAssets.length > 0 && `(${selectedAssets.length} seçili)`}
+            {pagination.total} asset
           </span>
-          
-          {selectedAssets.length > 0 && (
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-outline-primary btn-sm"
-                onClick={() => handleBulkAction('bulk_assign')}
-                disabled={operationLoading}
-              >
-                <i className="bi bi-person-plus me-1"></i>
-                Toplu Ata
-              </button>
-              <button
-                className="btn btn-outline-info btn-sm"
-                onClick={() => handleBulkAction('bulk_transfer')}
-                disabled={operationLoading}
-              >
-                <i className="bi bi-arrow-right-circle me-1"></i>
-                Toplu Transfer
-              </button>
-              <button
-                className="btn btn-outline-warning btn-sm"
-                onClick={() => handleBulkAction('bulk_maintenance')}
-                disabled={operationLoading}
-              >
-                {operationLoading ? (
-                  <span className="spinner-border spinner-border-sm me-1"></span>
-                ) : (
-                  <i className="bi bi-tools me-1"></i>
-                )}
-                Bakıma Al
-              </button>
-              <button
-                className="btn btn-outline-success btn-sm"
-                onClick={() => handleBulkAction('bulk_available')}
-                disabled={operationLoading}
-              >
-                <i className="bi bi-check-circle me-1"></i>
-                Müsait Yap
-              </button>
-              <button
-                className="btn btn-outline-danger btn-sm"
-                onClick={() => handleBulkAction('bulk_delete')}
-                disabled={operationLoading}
-              >
-                <i className="bi bi-trash me-1"></i>
-                Sil
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="btn-group">
@@ -737,7 +565,6 @@ const AllAssets: React.FC = () => {
                   <table className="table table-hover mb-0">
                     <thead className="bg-light">
                       <tr>
-                        <th style={{ width: '40px' }}></th>
                         <th 
                           className="cursor-pointer"
                           onClick={() => handleSortChange('name')}
@@ -769,16 +596,6 @@ const AllAssets: React.FC = () => {
                         const statusBadge = getStatusBadge(asset.status);
                         return (
                           <tr key={asset.id}>
-                            <td>
-                              <div className="form-check">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  checked={selectedAssets.includes(asset.id)}
-                                  onChange={() => handleAssetSelect(asset.id)}
-                                />
-                              </div>
-                            </td>
                             <td>
                               <div className="d-flex align-items-center">
                                 <div 
@@ -912,14 +729,7 @@ const AllAssets: React.FC = () => {
                     <div className="card border-0 shadow-sm h-100">
                       <div className="card-body">
                         <div className="d-flex align-items-start justify-content-between mb-3">
-                          <div className="form-check">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              checked={selectedAssets.includes(asset.id)}
-                              onChange={() => handleAssetSelect(asset.id)}
-                            />
-                          </div>
+                          <div></div>
                           <span className={`badge ${statusBadge.bg}`}>
                             {statusBadge.text}
                           </span>
@@ -1036,16 +846,6 @@ const AllAssets: React.FC = () => {
                     <div className="card border-0 shadow-sm">
                       <div className="card-body">
                         <div className="row align-items-center">
-                          <div className="col-md-1">
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={selectedAssets.includes(asset.id)}
-                                onChange={() => handleAssetSelect(asset.id)}
-                              />
-                            </div>
-                          </div>
                           <div className="col-md-1">
                             <div 
                               className="rounded p-3 text-center"

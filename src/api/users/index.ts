@@ -7,4 +7,3 @@ export { updateUser } from './updateUser';
 export { deleteUser } from './deleteUser';
 export { updateUserStatus } from './updateUserStatus';
 export { getUserRoles } from './userRoles';
-export { bulkUserOperations } from './bulkOperations';
