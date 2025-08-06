@@ -1,8 +1,10 @@
-// src/pages/assets/AllAssets.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Asset, AssetFilter } from '../../api/types/assets';
 import { assetsApi } from '../../api/assets';
+import { categoriesApi } from '../../api/assets/categories';
+import { bulkOperationsApi } from '../../api/assets/bulkOperations';
+
 
 interface AssetFilters {
   search?: string;
@@ -23,13 +25,120 @@ interface PaginationInfo {
   totalPages: number;
 }
 
+// Notification Component
+const Toast: React.FC<{
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  show: boolean;
+  onClose: () => void;
+}> = ({ type, message, show, onClose }) => {
+  useEffect(() => {
+    if (show) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [show, onClose]);
+
+  if (!show) return null;
+
+  const getToastClass = () => {
+    switch (type) {
+      case 'success': return 'alert-success';
+      case 'error': return 'alert-danger';
+      case 'warning': return 'alert-warning';
+      case 'info': return 'alert-info';
+      default: return 'alert-info';
+    }
+  };
+
+  return (
+    <div className={`alert ${getToastClass()} alert-dismissible position-fixed`} 
+         style={{ top: '20px', right: '20px', zIndex: 1050, minWidth: '300px' }}>
+      <div className="d-flex align-items-center">
+        <i className={`bi ${type === 'success' ? 'bi-check-circle' : type === 'error' ? 'bi-x-circle' : 'bi-info-circle'} me-2`}></i>
+        {message}
+        <button type="button" className="btn-close ms-auto" onClick={onClose}></button>
+      </div>
+    </div>
+  );
+};
+
+// Delete Confirmation Modal
+const DeleteConfirmationModal: React.FC<{
+  show: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  assetName?: string;
+  isMultiple?: boolean;
+  count?: number;
+}> = ({ show, onClose, onConfirm, assetName, isMultiple = false, count = 1 }) => {
+  if (!show) return null;
+
+  return (
+    <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content">
+          <div className="modal-header border-0">
+            <h5 className="modal-title text-danger">
+              <i className="bi bi-exclamation-triangle me-2"></i>
+              Silme Onayı
+            </h5>
+            <button type="button" className="btn-close" onClick={onClose}></button>
+          </div>
+          <div className="modal-body">
+            <p className="mb-3">
+              {isMultiple 
+                ? `Seçili ${count} asset'i kalıcı olarak silmek istediğinizden emin misiniz?`
+                : `"${assetName}" asset'ini kalıcı olarak silmek istediğinizden emin misiniz?`
+              }
+            </p>
+            <div className="alert alert-warning mb-0">
+              <i className="bi bi-info-circle me-2"></i>
+              Bu işlem geri alınamaz. Tüm ilgili veriler silinecektir.
+            </div>
+          </div>
+          <div className="modal-footer border-0">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              İptal
+            </button>
+            <button type="button" className="btn btn-danger" onClick={onConfirm}>
+              <i className="bi bi-trash me-1"></i>
+              {isMultiple ? 'Tümünü Sil' : 'Sil'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AllAssets: React.FC = () => {
   const navigate = useNavigate();
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid' | 'cards'>('table');
+  const [operationLoading, setOperationLoading] = useState(false);
+  
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+  }>({ show: false, type: 'info', message: '' });
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    show: boolean;
+    assetId?: string;
+    assetName?: string;
+    isMultiple?: boolean;
+    assetIds?: string[];
+  }>({ show: false });
   
   const [filters, setFilters] = useState<AssetFilters>({
     search: '',
@@ -56,6 +165,21 @@ const AllAssets: React.FC = () => {
     totalValue: 0
   });
 
+  // Show toast notification
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info', message: string) => {
+    setToast({ show: true, type, message });
+  };
+
+  // Load categories
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await categoriesApi.getAll();
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Categories load failed:', error);
+    }
+  };
+
   // Load assets
   const loadAssets = async (newFilters?: AssetFilters) => {
     try {
@@ -79,7 +203,7 @@ const AllAssets: React.FC = () => {
       };
       setStats(statsData);
       
-      // Set pagination info (for now, we'll simulate it)
+      // Set pagination info
       setPagination({
         total: assetsData.length,
         page: filterParams.page || 1,
@@ -88,7 +212,9 @@ const AllAssets: React.FC = () => {
       });
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Asset\'lar yüklenemedi');
+      const errorMessage = err instanceof Error ? err.message : 'Asset\'lar yüklenemedi';
+      setError(errorMessage);
+      showToast('error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -96,6 +222,7 @@ const AllAssets: React.FC = () => {
 
   useEffect(() => {
     loadAssets();
+    loadCategories();
   }, [filters]);
 
   // Asset selection
@@ -137,6 +264,118 @@ const AllAssets: React.FC = () => {
     setFilters(prev => ({ ...prev, page }));
   };
 
+  // Single asset deletion
+  const handleDeleteAsset = async (assetId: string, assetName: string) => {
+    setDeleteModal({ show: true, assetId, assetName });
+  };
+
+  const confirmDeleteAsset = async () => {
+    if (!deleteModal.assetId) return;
+
+    try {
+      setOperationLoading(true);
+      await assetsApi.delete(deleteModal.assetId);
+      
+      showToast('success', `Asset "${deleteModal.assetName}" başarıyla silindi`);
+      await loadAssets();
+      setSelectedAssets(prev => prev.filter(id => id !== deleteModal.assetId));
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Asset silinirken hata oluştu';
+      showToast('error', errorMessage);
+    } finally {
+      setOperationLoading(false);
+      setDeleteModal({ show: false });
+    }
+  };
+
+  // Bulk operations
+  const handleBulkDelete = () => {
+    if (selectedAssets.length === 0) {
+      showToast('warning', 'Lütfen silmek istediğiniz asset(ları) seçin');
+      return;
+    }
+    
+    setDeleteModal({ 
+      show: true, 
+      isMultiple: true, 
+      assetIds: selectedAssets 
+    });
+  };
+
+  const confirmBulkDelete = async () => {
+    if (!deleteModal.assetIds || deleteModal.assetIds.length === 0) return;
+
+    try {
+      setOperationLoading(true);
+      const result = await bulkOperationsApi.bulkDelete(deleteModal.assetIds);
+      
+      if (result.success) {
+        showToast('success', `${result.processedCount} asset başarıyla silindi`);
+        await loadAssets();
+        setSelectedAssets([]);
+      } else {
+        showToast('error', `İşlem başarısız: ${result.errorCount} hata`);
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Toplu silme işlemi sırasında hata oluştu';
+      showToast('error', errorMessage);
+    } finally {
+      setOperationLoading(false);
+      setDeleteModal({ show: false });
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedAssets.length === 0) {
+      showToast('warning', 'Lütfen işlem yapılacak asset(ları) seçin');
+      return;
+    }
+    
+    try {
+      setOperationLoading(true);
+      let result;
+      
+      switch (action) {
+        case 'bulk_transfer':
+          navigate(`/dashboard/assets/bulk-operations?operation=transfer&assets=${selectedAssets.join(',')}`);
+          return;
+          
+        case 'bulk_assign':
+          navigate(`/dashboard/assets/bulk-operations?operation=assign&assets=${selectedAssets.join(',')}`);
+          return;
+          
+        case 'bulk_maintenance':
+          result = await bulkOperationsApi.bulkUpdateStatus(selectedAssets, 'Maintenance');
+          showToast('success', `${result.processedCount} asset bakıma alındı`);
+          break;
+          
+        case 'bulk_available':
+          result = await bulkOperationsApi.bulkUpdateStatus(selectedAssets, 'Available');
+          showToast('success', `${result.processedCount} asset müsait duruma getirildi`);
+          break;
+          
+        case 'bulk_delete':
+          handleBulkDelete();
+          return;
+          
+        default:
+          console.log('Unknown bulk action:', action);
+          return;
+      }
+      
+      await loadAssets();
+      setSelectedAssets([]);
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Toplu işlem sırasında hata oluştu';
+      showToast('error', errorMessage);
+    } finally {
+      setOperationLoading(false);
+    }
+  };
+
   // Quick actions
   const handleQuickAssign = (assetId: string) => {
     navigate(`/dashboard/assets/transfer?assetId=${assetId}`);
@@ -144,27 +383,6 @@ const AllAssets: React.FC = () => {
 
   const handleQRGenerate = (assetId: string) => {
     navigate(`/dashboard/assets/qr-generator?assetId=${assetId}`);
-  };
-
-  const handleBulkAction = (action: string) => {
-    if (selectedAssets.length === 0) {
-      alert('Lütfen işlem yapılacak asset(ları) seçin');
-      return;
-    }
-    
-    switch (action) {
-      case 'bulk_transfer':
-        navigate(`/dashboard/assets/bulk-operations?operation=transfer&assets=${selectedAssets.join(',')}`);
-        break;
-      case 'bulk_assign':
-        navigate(`/dashboard/assets/bulk-operations?operation=assign&assets=${selectedAssets.join(',')}`);
-        break;
-      case 'bulk_maintenance':
-        navigate(`/dashboard/assets/bulk-operations?operation=maintenance&assets=${selectedAssets.join(',')}`);
-        break;
-      default:
-        console.log('Bulk action:', action, selectedAssets);
-    }
   };
 
   // Get status badge color
@@ -187,6 +405,24 @@ const AllAssets: React.FC = () => {
 
   return (
     <div className="container-fluid p-4">
+      {/* Toast Notifications */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        show={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={deleteModal.show}
+        onClose={() => setDeleteModal({ show: false })}
+        onConfirm={deleteModal.isMultiple ? confirmBulkDelete : confirmDeleteAsset}
+        assetName={deleteModal.assetName}
+        isMultiple={deleteModal.isMultiple}
+        count={deleteModal.assetIds?.length}
+      />
+
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -316,9 +552,11 @@ const AllAssets: React.FC = () => {
                 onChange={(e) => handleFilterChange('categoryId', e.target.value)}
               >
                 <option value="">Tüm Kategoriler</option>
-                <option value="comp">Bilgisayar</option>
-                <option value="safe">İş Güvenliği</option>
-                <option value="office">Ofis</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-md-2">
@@ -387,6 +625,7 @@ const AllAssets: React.FC = () => {
               <button
                 className="btn btn-outline-primary btn-sm"
                 onClick={() => handleBulkAction('bulk_assign')}
+                disabled={operationLoading}
               >
                 <i className="bi bi-person-plus me-1"></i>
                 Toplu Ata
@@ -394,6 +633,7 @@ const AllAssets: React.FC = () => {
               <button
                 className="btn btn-outline-info btn-sm"
                 onClick={() => handleBulkAction('bulk_transfer')}
+                disabled={operationLoading}
               >
                 <i className="bi bi-arrow-right-circle me-1"></i>
                 Toplu Transfer
@@ -401,9 +641,30 @@ const AllAssets: React.FC = () => {
               <button
                 className="btn btn-outline-warning btn-sm"
                 onClick={() => handleBulkAction('bulk_maintenance')}
+                disabled={operationLoading}
               >
-                <i className="bi bi-tools me-1"></i>
+                {operationLoading ? (
+                  <span className="spinner-border spinner-border-sm me-1"></span>
+                ) : (
+                  <i className="bi bi-tools me-1"></i>
+                )}
                 Bakıma Al
+              </button>
+              <button
+                className="btn btn-outline-success btn-sm"
+                onClick={() => handleBulkAction('bulk_available')}
+                disabled={operationLoading}
+              >
+                <i className="bi bi-check-circle me-1"></i>
+                Müsait Yap
+              </button>
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => handleBulkAction('bulk_delete')}
+                disabled={operationLoading}
+              >
+                <i className="bi bi-trash me-1"></i>
+                Sil
               </button>
             </div>
           )}
@@ -619,7 +880,11 @@ const AllAssets: React.FC = () => {
                                     </li>
                                     <li><hr className="dropdown-divider" /></li>
                                     <li>
-                                      <button className="dropdown-item text-danger">
+                                      <button 
+                                        className="dropdown-item text-danger"
+                                        onClick={() => handleDeleteAsset(asset.id, asset.name)}
+                                        disabled={operationLoading}
+                                      >
                                         <i className="bi bi-trash me-2"></i>Sil
                                       </button>
                                     </li>
@@ -698,19 +963,59 @@ const AllAssets: React.FC = () => {
                               </small>
                             )}
                           </div>
-                          <div className="d-flex gap-1">
+                          <div className="dropdown">
                             <button
-                              className="btn btn-outline-primary btn-sm"
-                              onClick={() => navigate(`/dashboard/assets/${asset.id}`)}
+                              className="btn btn-outline-secondary btn-sm dropdown-toggle"
+                              type="button"
+                              data-bs-toggle="dropdown"
                             >
-                              <i className="bi bi-eye"></i>
+                              <i className="bi bi-three-dots"></i>
                             </button>
-                            <button
-                              className="btn btn-outline-secondary btn-sm"
-                              onClick={() => handleQRGenerate(asset.id)}
-                            >
-                              <i className="bi bi-qr-code"></i>
-                            </button>
+                            <ul className="dropdown-menu">
+                              <li>
+                                <button
+                                  className="dropdown-item"
+                                  onClick={() => navigate(`/dashboard/assets/${asset.id}`)}
+                                >
+                                  <i className="bi bi-eye me-2"></i>Detaylar
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item"
+                                  onClick={() => navigate(`/dashboard/assets/${asset.id}/edit`)}
+                                >
+                                  <i className="bi bi-pencil me-2"></i>Düzenle
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item"
+                                  onClick={() => handleQRGenerate(asset.id)}
+                                >
+                                  <i className="bi bi-qr-code me-2"></i>QR Kod
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item"
+                                  onClick={() => handleQuickAssign(asset.id)}
+                                >
+                                  <i className="bi bi-person-plus me-2"></i>
+                                  {asset.currentUser ? 'Transfer Et' : 'Ata'}
+                                </button>
+                              </li>
+                              <li><hr className="dropdown-divider" /></li>
+                              <li>
+                                <button 
+                                  className="dropdown-item text-danger"
+                                  onClick={() => handleDeleteAsset(asset.id, asset.name)}
+                                  disabled={operationLoading}
+                                >
+                                  <i className="bi bi-trash me-2"></i>Sil
+                                </button>
+                              </li>
+                            </ul>
                           </div>
                         </div>
                       </div>
@@ -824,7 +1129,11 @@ const AllAssets: React.FC = () => {
                                   </li>
                                   <li><hr className="dropdown-divider" /></li>
                                   <li>
-                                    <button className="dropdown-item text-danger">
+                                    <button 
+                                      className="dropdown-item text-danger"
+                                      onClick={() => handleDeleteAsset(asset.id, asset.name)}
+                                      disabled={operationLoading}
+                                    >
                                       <i className="bi bi-trash me-2"></i>Sil
                                     </button>
                                   </li>

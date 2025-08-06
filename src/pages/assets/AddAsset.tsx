@@ -84,26 +84,30 @@ const AddAsset: React.FC = () => {
 
     setLoading(true);
     try {
-      // Create asset via API
-      const assetDto: AssetDto = {
+      // 🔥 createdBy alanını ve qrCode ekle
+      const assetDto = {
         assetNumber: formData.assetNumber,
         name: formData.name,
         serialNumber: formData.serialNumber,
         categoryId: formData.categoryId,
         status: 'Available',
-        notes: formData.notes,
-        qrCode: `QR-${formData.assetNumber}`,
-        createdBy: 'current-user-id', // Replace with actual user ID
+        createdBy: '30549f61-ed08-4867-bce0-b80a64ae7199', // Mevcut user ID
+        qrCode: `QR-${formData.assetNumber}` // QR kod da ekleyelim
       };
       
-      await assetsApi.create(assetDto);
+      console.log('Sending asset data:', assetDto);
       
-      console.log('Asset başarıyla oluşturuldu:', assetDto);
+      const result = await assetsApi.create(assetDto as AssetDto);
       
-      // Success notification would be here
+      console.log('Asset başarıyla oluşturuldu:', result);
       navigate('/dashboard/assets');
     } catch (error) {
+      // error handling...
       console.error('Asset oluşturma hatası:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+      }
+      setErrors({ submit: 'Asset oluşturulamadı. Lütfen bilgileri kontrol edin.' });
     } finally {
       setLoading(false);
     }

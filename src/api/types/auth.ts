@@ -21,7 +21,7 @@ export interface RegisterRequest {
 
 export interface RegisterResponse {
   message: string;
-  user?: any;
+  user?: AuthUser;
 }
 
 export interface UserError {

@@ -56,7 +56,6 @@ const AddUser: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
@@ -64,12 +63,16 @@ const AddUser: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      await createUser(formData);
-      
+
+      // Backend expects departmentId as UUID or null, not 'it', 'hr', etc.
+      const payload = {
+        ...formData,
+        departmentId: formData.departmentId ? formData.departmentId : undefined
+      };
+
+      await createUser(payload);
+
       setSuccess(true);
-      
-      // 2 saniye sonra kullanıcılar sayfasına yönlendir
       setTimeout(() => {
         navigate('/dashboard/users');
       }, 2000);
@@ -275,10 +278,12 @@ const AddUser: React.FC = () => {
                       onChange={handleInputChange}
                     >
                       <option value="">Departman Seçin</option>
-                      <option value="it">BT Departmanı</option>
-                      <option value="hr">İnsan Kaynakları</option>
-                      <option value="ops">Operasyon</option>
-                      <option value="finance">Mali İşler</option>
+                      {/* TODO: Replace these with real department UUIDs from your backend */}
+                      <option value="">Seçim Yok</option>
+                      {/* <option value="30549f61-ed08-4867-bce0-b80a64ae7199">BT Departmanı</option> */}
+                      {/* <option value="...">İnsan Kaynakları</option> */}
+                      {/* <option value="...">Operasyon</option> */}
+                      {/* <option value="...">Mali İşler</option> */}
                     </select>
                   </div>
                 </div>

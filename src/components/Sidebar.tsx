@@ -200,7 +200,7 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Video Eğitimler', path: '/dashboard/help/videos', icon: 'bi-play-circle' },
       { text: 'SSS', path: '/dashboard/help/faq', icon: 'bi-question-circle' },
       { text: 'Teknik Destek', path: '/dashboard/help/support', icon: 'bi-headset' },
-      { text: 'Geri Bildirim', path: '/dashboard/help/feedback', icon: 'bi-chat-square-dots' },
+    
       { text: 'Sistem Durumu', path: '/dashboard/help/system-status', icon: 'bi-activity' },
     ],
   },

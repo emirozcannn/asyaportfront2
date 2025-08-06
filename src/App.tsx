@@ -119,7 +119,7 @@ import UserGuide from './pages/help/UserGuide';
 import VideoTutorials from './pages/help/VideoTutorials';
 import FAQ from './pages/help/FAQ';
 import TechnicalSupport from './pages/help/TechnicalSupport';
-import Feedback from './pages/help/Feedback';
+
 import SystemStatus from './pages/help/SystemStatus';
 
 
@@ -252,7 +252,7 @@ function App() {
           <Route path="/dashboard/help/videos" element={<Layout><VideoTutorials /></Layout>} />
           <Route path="/dashboard/help/faq" element={<Layout><FAQ /></Layout>} />
           <Route path="/dashboard/help/support" element={<Layout><TechnicalSupport /></Layout>} />
-          <Route path="/dashboard/help/feedback" element={<Layout><Feedback /></Layout>} />
+      
           <Route path="/dashboard/help/system-status" element={<Layout><SystemStatus /></Layout>} />
           
         

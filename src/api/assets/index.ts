@@ -26,7 +26,19 @@ const apiRequest = async <T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Try to get error details from response body
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.text();
+        if (errorData) {
+          console.error(`Error response body:`, errorData);
+          errorMessage += ` - ${errorData}`;
+        }
+      } catch {
+        // If we can't parse error response, just use status
+      }
+      
+      throw new Error(errorMessage);
     }
 
     // 204 No Content durumunda boş response döndür
