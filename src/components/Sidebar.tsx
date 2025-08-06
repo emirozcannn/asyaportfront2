@@ -28,7 +28,7 @@ interface MenuItem {
 
 const superAdminMenu: MenuItem[] = [
   {
-    icon: 'bi-speedometer2',
+    icon: 'bi bi-house',
     text: 'Dashboard',
     path: '/dashboard',
     badge: null,
@@ -83,17 +83,17 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Otomatik Onaylar', path: '/dashboard/requests/auto-approve', icon: 'bi-lightning' },
     ],
   },
-  {
-    icon: 'bi-arrow-repeat',
-    text: 'İade Yönetimi',
-    children: [
-      { text: 'Bekleyen İadeler', path: '/dashboard/returns/pending', icon: 'bi-arrow-return-left' },
-      { text: 'Tamamlanan İadeler', path: '/dashboard/returns/completed', icon: 'bi-check-all' },
-      { text: 'Geciken İadeler', path: '/dashboard/returns/overdue', icon: 'bi-exclamation-diamond' },
-      { text: 'İade Takvimleri', path: '/dashboard/returns/calendar', icon: 'bi-calendar-event' },
-      { text: 'Otomatik Hatırlatmalar', path: '/dashboard/returns/reminders', icon: 'bi-bell' },
-    ],
-  },
+  // {
+  //   icon: 'bi-arrow-repeat',
+  //   text: 'İade Yönetimi',
+  //   children: [
+  //     { text: 'Bekleyen İadeler', path: '/dashboard/returns/pending', icon: 'bi-arrow-return-left' },
+  //     { text: 'Tamamlanan İadeler', path: '/dashboard/returns/completed', icon: 'bi-check-all' },
+  //     { text: 'Geciken İadeler', path: '/dashboard/returns/overdue', icon: 'bi-exclamation-diamond' },
+  //     { text: 'İade Takvimleri', path: '/dashboard/returns/calendar', icon: 'bi-calendar-event' },
+  //     { text: 'Otomatik Hatırlatmalar', path: '/dashboard/returns/reminders', icon: 'bi-bell' },
+  //   ],
+  // },
   {
     icon: 'bi-bar-chart-line',
     text: 'Raporlar & Analitik',
@@ -119,30 +119,30 @@ const superAdminMenu: MenuItem[] = [
       { text: 'Yedek Parça Yönetimi', path: '/dashboard/maintenance/parts', icon: 'bi-gear-wide-connected' },
     ],
   },
-  {
-    icon: 'bi-geo-alt',
-    text: 'Lokasyon Yönetimi',
-    children: [
-      { text: 'Lokasyon Haritası', path: '/dashboard/locations/map', icon: 'bi-map' },
-      { text: 'Bina/Kat Yönetimi', path: '/dashboard/locations/buildings', icon: 'bi-building' },
-      { text: 'Zimmet Konumları', path: '/dashboard/locations/assets', icon: 'bi-pin-map' },
-      { text: 'Lokasyon Transferi', path: '/dashboard/locations/transfer', icon: 'bi-arrow-left-right' },
-    ],
-  },
-  {
-    icon: 'bi-gear-fill',
-    text: 'Sistem Ayarları',
-    children: [
-      { text: 'Genel Ayarlar', path: '/dashboard/settings/general', icon: 'bi-sliders' },
-      { text: 'Kategori-Departman Eşleştirme', path: '/dashboard/settings/mapping', icon: 'bi-diagram-2' },
-      { text: 'Onay Süreç Ayarları', path: '/dashboard/settings/approval', icon: 'bi-check-square' },
-      { text: 'Bildirim Ayarları', path: '/dashboard/settings/notifications', icon: 'bi-bell-fill' },
-      { text: 'E-posta Şablonları', path: '/dashboard/settings/email-templates', icon: 'bi-envelope' },
-      { text: 'Sistem Parametreleri', path: '/dashboard/settings/parameters', icon: 'bi-toggles' },
-      { text: 'Backup/Restore', path: '/dashboard/settings/backup', icon: 'bi-cloud-download' },
-      { text: 'Sistem Bakımı', path: '/dashboard/settings/maintenance', icon: 'bi-tools' },
-    ],
-  },
+  // {
+  //   icon: 'bi-geo-alt',
+  //   text: 'Lokasyon Yönetimi',
+  //   children: [
+  //     { text: 'Lokasyon Haritası', path: '/dashboard/locations/map', icon: 'bi-map' },
+  //     { text: 'Bina/Kat Yönetimi', path: '/dashboard/locations/buildings', icon: 'bi-building' },
+  //     { text: 'Zimmet Konumları', path: '/dashboard/locations/assets', icon: 'bi-pin-map' },
+  //     { text: 'Lokasyon Transferi', path: '/dashboard/locations/transfer', icon: 'bi-arrow-left-right' },
+  //   ],
+  // },
+  // {
+  //   icon: 'bi-gear-fill',
+  //   text: 'Sistem Ayarları',
+  //   children: [
+  //     { text: 'Genel Ayarlar', path: '/dashboard/settings/general', icon: 'bi-sliders' },
+  //     { text: 'Kategori-Departman Eşleştirme', path: '/dashboard/settings/mapping', icon: 'bi-diagram-2' },
+  //     { text: 'Onay Süreç Ayarları', path: '/dashboard/settings/approval', icon: 'bi-check-square' },
+  //     { text: 'Bildirim Ayarları', path: '/dashboard/settings/notifications', icon: 'bi-bell-fill' },
+  //     { text: 'E-posta Şablonları', path: '/dashboard/settings/email-templates', icon: 'bi-envelope' },
+  //     { text: 'Sistem Parametreleri', path: '/dashboard/settings/parameters', icon: 'bi-toggles' },
+  //     { text: 'Backup/Restore', path: '/dashboard/settings/backup', icon: 'bi-cloud-download' },
+  //     { text: 'Sistem Bakımı', path: '/dashboard/settings/maintenance', icon: 'bi-tools' },
+  //   ],
+  // },
   {
     icon: 'bi-shield-lock-fill',
     text: 'Güvenlik & Denetim',
@@ -179,31 +179,31 @@ const superAdminMenu: MenuItem[] = [
       { text: 'İzin/Tatil Yönetimi', path: '/dashboard/hr/leave', icon: 'bi-calendar-x' },
     ],
   },
-  {
-    icon: 'bi-currency-dollar',
-    text: 'Mali İşler',
-    children: [
-      { text: 'Zimmet Değerleri', path: '/dashboard/finance/asset-values', icon: 'bi-calculator' },
-      { text: 'Amortisman Hesaplamaları', path: '/dashboard/finance/depreciation', icon: 'bi-graph-down' },
-      { text: 'Bütçe Planlaması', path: '/dashboard/finance/budget', icon: 'bi-piggy-bank' },
-      { text: 'Maliyet Merkezleri', path: '/dashboard/finance/cost-centers', icon: 'bi-pie-chart' },
-      { text: 'Finansal Raporlar', path: '/dashboard/finance/reports', icon: 'bi-file-earmark-text' },
-      { text: 'Satın Alma Talepleri', path: '/dashboard/finance/procurement', icon: 'bi-cart-plus' },
-    ],
-  },
-  {
-    icon: 'bi-question-circle-fill',
-    text: 'Destek & Yardım',
-    children: [
-      { text: 'Sistem Dokümantasyonu', path: '/dashboard/help/docs', icon: 'bi-book' },
-      { text: 'Kullanıcı Rehberi', path: '/dashboard/help/user-guide', icon: 'bi-journal-bookmark' },
-      { text: 'Video Eğitimler', path: '/dashboard/help/videos', icon: 'bi-play-circle' },
-      { text: 'SSS', path: '/dashboard/help/faq', icon: 'bi-question-circle' },
-      { text: 'Teknik Destek', path: '/dashboard/help/support', icon: 'bi-headset' },
-      { text: 'Geri Bildirim', path: '/dashboard/help/feedback', icon: 'bi-chat-square-dots' },
-      { text: 'Sistem Durumu', path: '/dashboard/help/system-status', icon: 'bi-activity' },
-    ],
-  },
+  // {
+  //   icon: 'bi-currency-dollar',
+  //   text: 'Mali İşler',
+  //   children: [
+  //     { text: 'Zimmet Değerleri', path: '/dashboard/finance/asset-values', icon: 'bi-calculator' },
+  //     { text: 'Amortisman Hesaplamaları', path: '/dashboard/finance/depreciation', icon: 'bi-graph-down' },
+  //     { text: 'Bütçe Planlaması', path: '/dashboard/finance/budget', icon: 'bi-piggy-bank' },
+  //     { text: 'Maliyet Merkezleri', path: '/dashboard/finance/cost-centers', icon: 'bi-pie-chart' },
+  //     { text: 'Finansal Raporlar', path: '/dashboard/finance/reports', icon: 'bi-file-earmark-text' },
+  //     { text: 'Satın Alma Talepleri', path: '/dashboard/finance/procurement', icon: 'bi-cart-plus' },
+  //   ],
+  // },
+  // {
+  //   icon: 'bi-question-circle-fill',
+  //   text: 'Destek & Yardım',
+  //   children: [
+  //     { text: 'Sistem Dokümantasyonu', path: '/dashboard/help/docs', icon: 'bi-book' },
+  //     { text: 'Kullanıcı Rehberi', path: '/dashboard/help/user-guide', icon: 'bi-journal-bookmark' },
+  //     { text: 'Video Eğitimler', path: '/dashboard/help/videos', icon: 'bi-play-circle' },
+  //     { text: 'SSS', path: '/dashboard/help/faq', icon: 'bi-question-circle' },
+  //     { text: 'Teknik Destek', path: '/dashboard/help/support', icon: 'bi-headset' },
+  //     { text: 'Geri Bildirim', path: '/dashboard/help/feedback', icon: 'bi-chat-square-dots' },
+  //     { text: 'Sistem Durumu', path: '/dashboard/help/system-status', icon: 'bi-activity' },
+  //   ],
+  // },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
