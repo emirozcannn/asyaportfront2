@@ -1,6 +1,6 @@
 // src/pages/users/Users.tsx - Düzeltilmiş versiyon
 import React, { useState, useEffect } from 'react';
-import { getAllUsers } from '../../api/users';
+import { getAllUsers, deleteUser, updateUser } from '../../api/users';
 
 // Local types - import sorunlarını önlemek için
 interface User {
@@ -28,6 +28,10 @@ const Users: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [editModal, setEditModal] = useState<{ show: boolean; user?: User }>({ show: false });
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; user?: User }>({ show: false });
+  const [editForm, setEditForm] = useState<User | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Kullanıcıları yükleme
   const loadUsers = async (filters?: UserFilters) => {
@@ -67,6 +71,48 @@ const Users: React.FC = () => {
       setSelectedUsers([]);
     } else {
       setSelectedUsers(users.map(user => user.id));
+    }
+  };
+
+  // Edit modal aç/kapat
+  const openEditModal = (user: User) => {
+    setEditForm(user);
+    setEditModal({ show: true, user });
+  };
+  const closeEditModal = () => {
+    setEditModal({ show: false });
+    setEditForm(null);
+  };
+
+  // Delete modal aç/kapat
+  const openDeleteModal = (user: User) => setDeleteModal({ show: true, user });
+  const closeDeleteModal = () => setDeleteModal({ show: false });
+
+  // Kullanıcı silme işlemi
+  const handleDeleteUser = async () => {
+    if (!deleteModal.user) return;
+    try {
+      await deleteUser(deleteModal.user.id);
+      setUsers(prev => prev.filter(u => u.id !== deleteModal.user!.id));
+      closeDeleteModal();
+    } catch (err) {
+      alert('Kullanıcı silinemedi');
+    }
+  };
+
+  // Kullanıcı güncelleme işlemi
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editForm) return;
+    setEditLoading(true);
+    try {
+      await updateUser(editForm.id, editForm);
+      setUsers(prev => prev.map(u => u.id === editForm.id ? editForm : u));
+      closeEditModal();
+    } catch (err) {
+      alert('Kullanıcı güncellenemedi');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -184,7 +230,6 @@ const Users: React.FC = () => {
             )}
           </div>
         </div>
-
         <div className="card-body p-0">
           {loading ? (
             <div className="text-center py-5">
@@ -257,7 +302,7 @@ const Users: React.FC = () => {
                       </td>
                       <td>
                         <span className="badge bg-light text-dark">
-                          {user.department?.name || 'Atanmamış'}
+                          {user.department?.name || user.department || 'Atanmamış'}
                         </span>
                       </td>
                       <td>
@@ -276,37 +321,21 @@ const Users: React.FC = () => {
                         </small>
                       </td>
                       <td>
-                        <div className="dropdown">
+                        <div className="d-flex gap-1">
                           <button
-                            className="btn btn-outline-secondary btn-sm dropdown-toggle"
-                            type="button"
-                            data-bs-toggle="dropdown"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => openEditModal(user)}
+                            title="Düzenle"
                           >
-                            <i className="bi bi-three-dots"></i>
+                            <i className="bi bi-pencil"></i>
                           </button>
-                          <ul className="dropdown-menu">
-                            <li>
-                              <a className="dropdown-item" href="#">
-                                <i className="bi bi-eye me-2"></i>Görüntüle
-                              </a>
-                            </li>
-                            <li>
-                              <a className="dropdown-item" href="#">
-                                <i className="bi bi-pencil me-2"></i>Düzenle
-                              </a>
-                            </li>
-                            <li>
-                              <a className="dropdown-item" href="#">
-                                <i className="bi bi-shield me-2"></i>Rol Değiştir
-                              </a>
-                            </li>
-                            <li><hr className="dropdown-divider" /></li>
-                            <li>
-                              <a className="dropdown-item text-danger" href="#">
-                                <i className="bi bi-trash me-2"></i>Sil
-                              </a>
-                            </li>
-                          </ul>
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => openDeleteModal(user)}
+                            title="Sil"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -347,6 +376,130 @@ const Users: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {editModal.show && editForm && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <form onSubmit={handleEditSubmit}>
+                <div className="modal-header">
+                  <h5 className="modal-title">Kullanıcıyı Düzenle</h5>
+                  <button type="button" className="btn-close" onClick={closeEditModal}></button>
+                </div>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label">Ad Soyad</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.fullName}
+                      onChange={e => setEditForm({ ...editForm, fullName: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">E-posta</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={editForm.email}
+                      onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Departman</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.department?.name || ''}
+                      onChange={e => setEditForm({ ...editForm, department: { name: e.target.value } })}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Rol</label>
+                    <select
+                      className="form-select"
+                      value={editForm.role || ''}
+                      onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+                    >
+                      <option value="User">Kullanıcı</option>
+                      <option value="DepartmentAdmin">Departman Yöneticisi</option>
+                      <option value="Admin">Sistem Yöneticisi</option>
+                      <option value="SuperAdmin">Süper Yönetici</option>
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Durum</label>
+                    <select
+                      className="form-select"
+                      value={editForm.status || ''}
+                      onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                    >
+                      <option value="Active">Aktif</option>
+                      <option value="Inactive">Pasif</option>
+                      <option value="Suspended">Askıya Alınmış</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={closeEditModal}>
+                    İptal
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={editLoading}>
+                    {editLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Güncelleniyor...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-check-lg me-1"></i>
+                        Güncelle
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModal.show && deleteModal.user && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title text-danger">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  Kullanıcıyı Sil
+                </h5>
+                <button type="button" className="btn-close" onClick={closeDeleteModal}></button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  <strong>{deleteModal.user.fullName}</strong> adlı kullanıcıyı silmek istediğinizden emin misiniz?
+                </p>
+                <div className="alert alert-warning">
+                  Bu işlem geri alınamaz!
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={closeDeleteModal}>
+                  İptal
+                </button>
+                <button type="button" className="btn btn-danger" onClick={handleDeleteUser}>
+                  <i className="bi bi-trash me-1"></i>
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

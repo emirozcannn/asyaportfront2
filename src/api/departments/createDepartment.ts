@@ -7,13 +7,11 @@ const API_BASE_URL = 'https://localhost:7190/api';
 
 export const createDepartment = async (departmentData: CreateDepartmentDto): Promise<Department> => {
   try {
-    // API requires dto wrapper based on error message
+    // Doğrudan name ve code gönder
     const requestBody = {
-      dto: {
-        name: departmentData.name,
-        code: departmentData.code,
-        createdAt: new Date().toISOString()
-      }
+      name: departmentData.name,
+      code: departmentData.code,
+      createdAt: new Date().toISOString()
     };
 
     const response = await fetch(`${API_BASE_URL}/Departments`, {
