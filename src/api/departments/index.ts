@@ -23,8 +23,9 @@ export { getDepartmentPermissionsByDepartment } from './getDepartmentPermissions
 export { createDepartmentPermission } from './createDepartmentPermission';
 export { updateDepartmentPermission } from './updateDepartmentPermission';
 export { deleteDepartmentPermission } from './deleteDepartmentPermission';
+export * from './getAllCategories';
+export * from './getAllPermissions';
 
-// Re-export all types
 export type { 
   Department, 
   CreateDepartmentDto, 

@@ -7,6 +7,8 @@ import {
   deleteDepartmentPermission
 } from '../../api/departments';
 import type { Department, DepartmentCategoryPermission } from '../../api/departments';
+// Dinamik kategori ve izinler için API fonksiyonlarını ekle
+import { getAllCategories, getAllPermissions } from '../../api/departments';
 
 interface Category {
   id: string;
@@ -14,7 +16,6 @@ interface Category {
   description: string;
   icon: string;
   color: string;
-  permissions: Permission[];
 }
 
 interface Permission {
@@ -22,6 +23,7 @@ interface Permission {
   name: string;
   description: string;
   type: 'can_assign' | 'can_manage';
+  category_id: string;
 }
 
 export const PermissionSettings: React.FC = () => {
@@ -34,65 +36,10 @@ export const PermissionSettings: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [pendingChanges, setPendingChanges] = useState<number>(0);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
 
-  // Mock categories and permissions - replace with actual API data
-  const categories: Category[] = [
-    {
-      id: '1',
-      name: 'Asset Yönetimi',
-      description: 'Zimmet kayıtları ve asset yönetimi işlemleri',
-      icon: 'bi-box-seam',
-      color: 'primary',
-      permissions: [
-        { id: '1-assign', name: 'Asset Atama', description: 'Asset\'leri kullanıcılara atayabilme yetkisi', type: 'can_assign' },
-        { id: '1-manage', name: 'Asset Yönetimi', description: 'Asset\'leri oluşturma, düzenleme, silme yetkisi', type: 'can_manage' }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Kullanıcı Yönetimi',
-      description: 'Sistem kullanıcıları ve rol yönetimi',
-      icon: 'bi-people',
-      color: 'success',
-      permissions: [
-        { id: '2-assign', name: 'Kullanıcı Atama', description: 'Kullanıcıları departmanlara atayabilme', type: 'can_assign' },
-        { id: '2-manage', name: 'Kullanıcı Yönetimi', description: 'Kullanıcı oluşturma, düzenleme, silme', type: 'can_manage' }
-      ]
-    },
-    {
-      id: '3',
-      name: 'Raporlama',
-      description: 'Sistem raporları ve veri analizi',
-      icon: 'bi-graph-up',
-      color: 'info',
-      permissions: [
-        { id: '3-assign', name: 'Rapor Paylaşma', description: 'Raporları paylaşabilme ve dağıtabilme', type: 'can_assign' },
-        { id: '3-manage', name: 'Rapor Yönetimi', description: 'Rapor oluşturma, düzenleme ve silme', type: 'can_manage' }
-      ]
-    },
-    {
-      id: '4',
-      name: 'Sistem Yönetimi',
-      description: 'Sistem ayarları ve konfigürasyon',
-      icon: 'bi-gear',
-      color: 'warning',
-      permissions: [
-        { id: '4-assign', name: 'Ayar Uygulama', description: 'Sistem ayarlarını uygulayabilme', type: 'can_assign' },
-        { id: '4-manage', name: 'Sistem Yönetimi', description: 'Sistem ayarlarını değiştirebilme', type: 'can_manage' }
-      ]
-    },
-    {
-      id: '5',
-      name: 'Güvenlik',
-      description: 'Güvenlik ayarları ve erişim kontrolü',
-      icon: 'bi-shield-check',
-      color: 'danger',
-      permissions: [
-        { id: '5-assign', name: 'Güvenlik Atama', description: 'Güvenlik rollerini atayabilme', type: 'can_assign' },
-        { id: '5-manage', name: 'Güvenlik Yönetimi', description: 'Güvenlik ayarlarını yönetebilme', type: 'can_manage' }
-      ]
-    }
-  ];
+  // ...existing code...
 
   useEffect(() => {
     loadData();
@@ -102,10 +49,19 @@ export const PermissionSettings: React.FC = () => {
     try {
       setIsLoading(true);
       setError('');
-      
+
+      // Departmanları çek
       const departmentsData = await getAllDepartments();
       setDepartments(departmentsData);
-      
+
+      // Kategorileri çek
+      const categoriesData = await getAllCategories();
+      setCategories(categoriesData);
+
+      // İzinleri çek
+      const permissionsData = await getAllPermissions();
+      setPermissions(permissionsData);
+
       if (departmentsData.length > 0) {
         setSelectedDepartment(departmentsData[0].id);
         await loadDepartmentPermissions(departmentsData[0].id);
@@ -155,22 +111,16 @@ export const PermissionSettings: React.FC = () => {
       if (existingPermission) {
         // Update existing permission
         const updateData = {
-          ...existingPermission,
-          [permissionType]: granted
+          can_assign: permissionType === 'can_assign' ? granted : existingPermission.can_assign,
+          can_manage: permissionType === 'can_manage' ? granted : existingPermission.can_manage
         };
-        
-        await updateDepartmentPermission(existingPermission.id, {
-          can_assign: updateData.can_assign,
-          can_manage: updateData.can_manage,
-          department_id: updateData.department_id,
-          category_id: updateData.category_id
-        });
+        await updateDepartmentPermission(existingPermission.id, updateData);
 
         // Update local state
         setDepartmentPermissions(prev => 
           prev.map(p => 
             p.id === existingPermission.id 
-              ? { ...p, [permissionType]: granted }
+              ? { ...p, ...updateData }
               : p
           )
         );
@@ -218,7 +168,7 @@ export const PermissionSettings: React.FC = () => {
 
   const handleBulkAction = (action: 'enable-all' | 'disable-all' | 'enable-assign' | 'enable-manage') => {
     categories.forEach(category => {
-      category.permissions.forEach(permission => {
+      getCategoryPermissions(category.id).forEach(permission => {
         switch (action) {
           case 'enable-all':
             handlePermissionToggle(category.id, permission.type, true);
@@ -270,11 +220,16 @@ export const PermissionSettings: React.FC = () => {
     selectedCategory === 'all' || category.id === selectedCategory
   );
 
-  // Calculate permission statistics
+  // Her kategoriye ait izinleri bul
+  const getCategoryPermissions = (categoryId: string) => {
+    return permissions.filter(p => p.category_id === categoryId);
+  };
+
+  // İstatistikler
   const selectedDepartmentData = departments.find(d => d.id === selectedDepartment);
-  const totalPermissions = categories.reduce((acc, cat) => acc + cat.permissions.length, 0);
+  const totalPermissions = categories.reduce((acc, cat) => acc + getCategoryPermissions(cat.id).length, 0);
   const grantedPermissions = categories.reduce((acc, cat) => {
-    return acc + cat.permissions.filter(perm => 
+    return acc + getCategoryPermissions(cat.id).filter(perm => 
       getPermissionStatus(cat.id, perm.type)
     ).length;
   }, 0);
@@ -579,72 +534,70 @@ export const PermissionSettings: React.FC = () => {
             </div>
           ) : (
             <div className="row g-4">
-              {filteredCategories.map(category => (
-                <div key={category.id} className="col-12">
-                  <div className="card border-0 shadow-sm">
-                    <div className={`card-header bg-${category.color} bg-opacity-10 border-bottom`}>
-                      <div className="d-flex align-items-center justify-content-between">
-                        <div className="d-flex align-items-center">
-                          <div className={`bg-${category.color} bg-opacity-20 rounded-circle p-3 me-3`}>
-                            <i className={`${category.icon} text-${category.color} fs-4`}></i>
-                          </div>
-                          <div>
-                            <h5 className="mb-1 fw-bold text-dark">{category.name}</h5>
-                            <p className="text-muted mb-0">{category.description}</p>
-                          </div>
+            {filteredCategories.map(category => (
+              <div key={category.id} className="col-12">
+                <div className="card border-0 shadow-sm">
+                  <div className={`card-header bg-${category.color} bg-opacity-10 border-bottom`}>
+                    <div className="d-flex align-items-center justify-content-between">
+                      <div className="d-flex align-items-center">
+                        <div className={`bg-${category.color} bg-opacity-20 rounded-circle p-3 me-3`}>
+                          <i className={`${category.icon} text-${category.color} fs-4`}></i>
                         </div>
-                        <div className="text-end">
-                          <div className="d-flex align-items-center gap-2">
-                            <span className={`badge bg-${category.color} bg-opacity-25 text-${category.color} fs-6 px-3 py-2`}>
-                              {category.permissions.filter(p => getPermissionStatus(category.id, p.type)).length} / {category.permissions.length} aktif
-                            </span>
-                          </div>
+                        <div>
+                          <h5 className="mb-1 fw-bold text-dark">{category.name}</h5>
+                          <p className="text-muted mb-0">{category.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <div className="d-flex align-items-center gap-2">
+                          <span className={`badge bg-${category.color} bg-opacity-25 text-${category.color} fs-6 px-3 py-2`}>
+                            {getCategoryPermissions(category.id).filter(p => getPermissionStatus(category.id, p.type)).length} / {getCategoryPermissions(category.id).length} aktif
+                          </span>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="card-body p-4">
-                      <div className="row g-4">
-                        {category.permissions.map(permission => (
-                          <div key={permission.id} className="col-md-6">
-                            <div className="border rounded p-4 h-100">
-                              <div className="d-flex align-items-start justify-content-between">
-                                <div className="flex-fill me-3">
-                                  <div className="d-flex align-items-center mb-2">
-                                    <h6 className="mb-0 fw-bold text-dark">{permission.name}</h6>
-                                    <span className={`badge ${permission.type === 'can_assign' ? 'bg-info' : 'bg-warning'} bg-opacity-25 ${permission.type === 'can_assign' ? 'text-info' : 'text-warning'} ms-2`}>
-                                      {permission.type === 'can_assign' ? 'ATAMA' : 'YÖNETİM'}
-                                    </span>
-                                  </div>
-                                  <p className="text-muted mb-3 small">{permission.description}</p>
-                                  <div className={`small text-${getPermissionStatus(category.id, permission.type) ? 'success' : 'muted'}`}>
-                                    <i className={`bi bi-${getPermissionStatus(category.id, permission.type) ? 'check-circle-fill' : 'dash-circle'} me-1`}></i>
-                                    {getPermissionStatus(category.id, permission.type) ? 'ETKİN' : 'PASİF'}
-                                  </div>
+                  </div>
+                  <div className="card-body p-4">
+                    <div className="row g-4">
+                      {getCategoryPermissions(category.id).map(permission => (
+                        <div key={permission.id} className="col-md-6">
+                          <div className="border rounded p-4 h-100">
+                            <div className="d-flex align-items-start justify-content-between">
+                              <div className="flex-fill me-3">
+                                <div className="d-flex align-items-center mb-2">
+                                  <h6 className="mb-0 fw-bold text-dark">{permission.name}</h6>
+                                  <span className={`badge ${permission.type === 'can_assign' ? 'bg-info' : 'bg-warning'} bg-opacity-25 ${permission.type === 'can_assign' ? 'text-info' : 'text-warning'} ms-2`}>
+                                    {permission.type === 'can_assign' ? 'ATAMA' : 'YÖNETİM'}
+                                  </span>
                                 </div>
-                                
-                                <div className="flex-shrink-0">
-                                  <div className="form-check form-switch">
-                                    <input
-                                      className="form-check-input"
-                                      type="checkbox"
-                                      role="switch"
-                                      style={{ width: '3rem', height: '1.5rem' }}
-                                      checked={getPermissionStatus(category.id, permission.type)}
-                                      onChange={(e) => handlePermissionToggle(category.id, permission.type, e.target.checked)}
-                                      id={`${category.id}-${permission.type}`}
-                                    />
-                                  </div>
+                                <p className="text-muted mb-3 small">{permission.description}</p>
+                                <div className={`small text-${getPermissionStatus(category.id, permission.type) ? 'success' : 'muted'}`}>
+                                  <i className={`bi bi-${getPermissionStatus(category.id, permission.type) ? 'check-circle-fill' : 'dash-circle'} me-1`}></i>
+                                  {getPermissionStatus(category.id, permission.type) ? 'ETKİN' : 'PASİF'}
+                                </div>
+                              </div>
+                              <div className="flex-shrink-0">
+                                <div className="form-check form-switch">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    role="switch"
+                                    style={{ width: '3rem', height: '1.5rem' }}
+                                    checked={getPermissionStatus(category.id, permission.type)}
+                                    onChange={(e) => handlePermissionToggle(category.id, permission.type, e.target.checked)}
+                                    id={`${category.id}-${permission.type}`}
+                                  />
                                 </div>
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
             </div>
           )}
         </div>

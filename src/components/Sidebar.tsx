@@ -214,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       
       {/* Sidebar */}
       <nav 
-        className={`sidebar position-fixed top-0 start-0 h-100 bg-white shadow-lg overflow-hidden ${
+        className={`sidebar position-fixed top-0 start-0 h-100 asyaport-sidebar ${
           isOpen ? 'd-block' : 'd-none d-lg-block'
         }`}
         style={{ 
@@ -225,57 +225,52 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         }}
       >
         {/* Header */}
-        <div className="p-4 border-bottom bg-gradient" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <div className="sidebar-header">
           <div className="d-flex align-items-center justify-content-center flex-column">
-            <div
-              className="d-flex align-items-center justify-content-center bg-white rounded-3 shadow-sm mb-3"
-              style={{ width: '64px', height: '64px' }}
-            >
-              <img
-                src="/asyaport-logo.webp"
-                alt="AsyaPort Logo"
-                width={78}
-                height={78}
-                style={{ objectFit: 'contain' }}
+            {/* Logo container - navbar ile uyumlu */}
+            <div className="asyaport-logo-sidebar">
+              <img 
+                src="/asyaport-logo.webp" 
+                alt="ASYAPORT Logo" 
+                className="logo-img-sidebar"
                 onError={(e) => {
-                  // Fallback icon if logo doesn't load
                   e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling!.style.display = 'block';
+                  e.currentTarget.nextElementSibling.style.display = 'flex';
                 }}
               />
-              <i 
-                className="bi bi-building text-primary fs-2" 
-                style={{ display: 'none' }}
-              ></i>
-            </div>
-            <div className="text-center">
-              <div className="fw-bold text mb-1" style={{ fontSize: '16px', letterSpacing: '0.5px' }}>
-                Asyaport Zimmet Paneli
+              <div className="logo-placeholder-sidebar">
+                <i className="bi bi-image"></i>
               </div>
-              <div className="text text-opacity-75" style={{ fontSize: '12px' }}>
-                Admin Paneli
+            </div>
+            
+            {/* Brand Text */}
+            <div className="text-center mt-3">
+              <div className="sidebar-brand-title">
+                ASYAPORT
+              </div>
+              <div className="sidebar-brand-subtitle">
+                Zimmet Yönetim Paneli
               </div>
             </div>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div className="p-3 border-bottom">
+        <div className="sidebar-search">
           <div className="position-relative">
             <input
               type="text"
-              className="form-control form-control-sm ps-5"
+              className="search-input"
               placeholder="Menüde ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ borderRadius: '20px', fontSize: '14px' }}
             />
-            <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+            <i className="bi bi-search search-icon"></i>
           </div>
         </div>
         
         {/* Menu Items */}
-        <div className="flex-grow-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+        <div className="sidebar-menu">
           <div className="p-2">
             <ul className="nav flex-column gap-1">
               {filteredMenu.map((item, idx) => (
@@ -283,41 +278,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   {item.children ? (
                     <>
                       <button
-                        className={`nav-link px-3 py-3 rounded-3 d-flex align-items-center w-100 text-start position-relative sidebar-button ${
-                          openMenus[idx] ? 'bg-primary text-white shadow-sm' : 'text-dark'
+                        className={`menu-button ${
+                          openMenus[idx] ? 'menu-button-active' : ''
                         }`}
-                        style={{ 
-                          border: 'none', 
-                          background: openMenus[idx] ? '' : 'none', 
-                          transition: 'all 0.2s', 
-                          textDecoration: 'none',
-                          fontSize: '14px'
-                        }}
                         onClick={() => handleMenuClick(idx)}
                       >
-                        <i className={`bi ${item.icon} me-3 fs-5`}></i>
-                        <span className="fw-medium flex-grow-1">{item.text}</span>
+                        <i className={`bi ${item.icon} me-3`}></i>
+                        <span className="flex-grow-1">{item.text}</span>
                         {renderBadge(item.badge)}
                         <i className={`bi ms-2 ${openMenus[idx] ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
                       </button>
                       {openMenus[idx] && (
-                        <ul className="nav flex-column ms-2 mb-2 mt-1">
+                        <ul className="submenu">
                           {item.children.map((child, cidx) => (
                             <li key={cidx} className="nav-item">
                               <Link
                                 to={child.path}
-                                className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center position-relative sidebar-child ${
-                                  location.pathname === child.path ? 'bg-primary bg-opacity-10 text-primary border-start border-primary border-3' : 'text-muted'
+                                className={`submenu-link ${
+                                  location.pathname === child.path ? 'submenu-link-active' : ''
                                 }`}
                                 onClick={() => window.innerWidth < 992 && toggleSidebar()}
-                                style={{ 
-                                  fontSize: '13px', 
-                                  transition: 'all 0.2s', 
-                                  textDecoration: 'none',
-                                  marginLeft: '8px'
-                                }}
                               >
-                                <i className={`bi ${child.icon} me-2`} style={{ fontSize: '12px' }}></i>
+                                <i className={`bi ${child.icon} me-2`}></i>
                                 <span className="flex-grow-1">{child.text}</span>
                                 {renderBadge(child.badge)}
                               </Link>
@@ -329,14 +311,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   ) : (
                     <Link
                       to={item.path || '#'}
-                      className={`nav-link px-3 py-3 rounded-3 d-flex align-items-center position-relative sidebar-link ${
-                        location.pathname === item.path ? 'bg-primary text-white shadow-sm' : 'text-dark'
+                      className={`menu-link ${
+                        location.pathname === item.path ? 'menu-link-active' : ''
                       }`}
                       onClick={() => window.innerWidth < 992 && toggleSidebar()}
-                      style={{ transition: 'all 0.2s', textDecoration: 'none', fontSize: '14px' }}
                     >
-                      <i className={`bi ${item.icon} me-3 fs-5`}></i>
-                      <span className="fw-medium flex-grow-1">{item.text}</span>
+                      <i className={`bi ${item.icon} me-3`}></i>
+                      <span className="flex-grow-1">{item.text}</span>
                       {renderBadge(item.badge)}
                     </Link>
                   )}
@@ -347,10 +328,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </div>
 
         {/* Footer */}
-        <div className="border-top p-3 bg-light">
+        <div className="sidebar-footer">
           <div className="d-flex align-items-center">
-            <div className="bg-success rounded-circle p-1 me-2">
-              <div className="bg-white rounded-circle" style={{ width: '8px', height: '8px' }}></div>
+            <div className="status-indicator me-2">
+              <div className="status-dot"></div>
             </div>
             <small className="text-muted">Sistem Aktif</small>
             <small className="text-muted ms-auto">v2.1.0</small>
@@ -359,24 +340,251 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       </nav>
 
       <style>{`
-        .sidebar-button:hover:not(.bg-primary) {
-          background-color: #f8f9fa !important;
-          color: #0d6efd !important;
-          transform: translateX(2px);
+        .asyaport-sidebar {
+          background: #ffffff;
+          box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          border-radius: 8px;
+        }
+
+        .sidebar-header {
+          padding: 24px;
+          background: linear-gradient(135deg, #1a1a1a 0%, #333333 50%, #1a1a1a 100%);
+          border-bottom: 2px solid #ffd700;
+          position: relative;
+        }
+
+        .sidebar-header::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background: linear-gradient(90deg, #000000, #333333, #666666, #999999, #cccccc, #ffcc00, #ffd700, #ffe135, #fff700, #cccccc, #999999, #666666, #333333, #000000);
+          background-size: 200% 100%;
+          animation: sidebarWave 4s ease-in-out infinite;
         }
         
-        .sidebar-link:hover:not(.bg-primary) {
-          background-color: #f8f9fa !important;
-          color: #0d6efd !important;
-          transform: translateX(2px);
+        @keyframes sidebarWave {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        .asyaport-logo-sidebar {
+          width: 56px;
+          height: 56px;
+          position: relative;
+          background: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .logo-img-sidebar {
+          width: 48px;
+          height: 48px;
+          object-fit: contain;
+          border-radius: 6px;
+        }
+
+        .logo-placeholder-sidebar {
+          width: 48px;
+          height: 48px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          color: #1a237e;
+          font-size: 20px;
+        }
+
+        .sidebar-brand-title {
+          font-family: 'Arial', 'Helvetica Neue', sans-serif;
+          font-size: 18px;
+          font-weight: 700;
+          color: #ffd700;
+          letter-spacing: 1px;
+          margin-bottom: 4px;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .sidebar-brand-subtitle {
+          font-size: 12px;
+          color: #cccccc;
+          font-weight: 500;
+        }
+
+        .sidebar-search {
+          padding: 16px 20px;
+          background: #ffffff;
+          border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 10px 12px 10px 38px;
+          border: 1px solid #dee2e6;
+          border-radius: 8px;
+          font-size: 14px;
+          background: #f8f9fa;
+          transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+          outline: none;
+          border-color: #ffd700;
+          box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+          background: #ffffff;
+        }
+
+        .search-icon {
+          position: absolute;
+          top: 50%;
+          left: 12px;
+          transform: translateY(-50%);
+          color: #6c757d;
+          font-size: 14px;
+        }
+
+        .sidebar-menu {
+          flex: 1;
+          overflow-y: auto;
+          padding: 8px 0;
+          max-height: calc(100vh - 280px);
+        }
+
+        .sidebar-menu::-webkit-scrollbar {
+          width: 6px;
         }
         
-        .sidebar-child:hover:not(.bg-primary) {
-          background-color: #f1f3f4 !important;
-          color: #495057 !important;
+        .sidebar-menu::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        
+        .sidebar-menu::-webkit-scrollbar-thumb {
+          background: #ffd700;
+          border-radius: 3px;
+        }
+        
+        .sidebar-menu::-webkit-scrollbar-thumb:hover {
+          background: #ffcc00;
+        }
+
+        .menu-button {
+          width: 100%;
+          padding: 12px 16px;
+          border: none;
+          background: none;
+          text-align: left;
+          color: #495057;
+          font-size: 14px;
+          font-weight: 500;
+          border-radius: 8px;
+          margin: 2px 8px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+        }
+
+        .menu-button:hover {
+          background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
+          color: #ffd700;
+          transform: translateX(2px);
+        }
+
+        .menu-button-active {
+          background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%) !important;
+          color: #ffd700 !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          border-left: 3px solid #ffd700;
+        }
+
+        .menu-link {
+          display: flex;
+          align-items: center;
+          padding: 12px 16px;
+          margin: 2px 8px;
+          color: #495057;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 500;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .menu-link:hover {
+          background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
+          color: #ffd700;
+          text-decoration: none;
+          transform: translateX(2px);
+        }
+
+        .menu-link-active {
+          background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%) !important;
+          color: #ffd700 !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          border-left: 3px solid #ffd700;
+        }
+
+        .submenu {
+          list-style: none;
+          padding: 0;
+          margin: 8px 0 12px 0;
+        }
+
+        .submenu-link {
+          display: flex;
+          align-items: center;
+          padding: 8px 16px 8px 32px;
+          margin: 1px 8px;
+          color: #6c757d;
+          text-decoration: none;
+          font-size: 13px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+
+        .submenu-link:hover {
+          background: #f8f9fa;
+          color: #333333;
+          text-decoration: none;
           transform: translateX(3px);
         }
-        
+
+        .submenu-link-active {
+          background: rgba(255, 215, 0, 0.1) !important;
+          color: #333333 !important;
+          border-left: 3px solid #ffd700;
+        }
+
+        .sidebar-footer {
+          padding: 16px 20px;
+          background: #f8f9fa;
+          border-top: 1px solid #e9ecef;
+        }
+
+        .status-indicator {
+          width: 20px;
+          height: 20px;
+          background: #28a745;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          background: white;
+          border-radius: 50%;
+        }
+
         .sidebar::-webkit-scrollbar {
           width: 6px;
         }
@@ -395,16 +603,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         }
         
         @media (max-width: 991.98px) {
-          .sidebar {
+          .asyaport-sidebar {
             transform: translateX(-100%) !important;
           }
-          .sidebar.d-block {
+          .asyaport-sidebar.d-block {
             transform: translateX(0) !important;
           }
         }
         
         @media (min-width: 992px) {
-          .sidebar {
+          .asyaport-sidebar {
             transform: translateX(0) !important;
           }
         }
