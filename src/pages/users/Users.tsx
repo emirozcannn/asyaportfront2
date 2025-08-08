@@ -1,13 +1,17 @@
-// src/pages/users/Users.tsx - Düzeltilmiş versiyon
+// src/pages/users/Users.tsx - Departman entegrasyonlu versiyon
 import React, { useState, useEffect } from 'react';
 import { getAllUsers, deleteUser, updateUser } from '../../api/users';
+import { getAllDepartments } from '../../api/departments/getAllDepartments';
+import type { Department } from '../../api/types/department';
 
 // Local types - import sorunlarını önlemek için
 interface User {
   id: string;
   fullName: string;
   email: string;
+  departmentId?: string; // API'den gelen departmentId
   department?: {
+    id?: string;
     name: string;
   };
   role?: string;
@@ -24,6 +28,7 @@ interface UserFilters {
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +37,25 @@ const Users: React.FC = () => {
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; user?: User }>({ show: false });
   const [editForm, setEditForm] = useState<User | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  // Departmanları yükleme
+  const loadDepartments = async () => {
+    try {
+      const departmentsData = await getAllDepartments();
+      setDepartments(departmentsData);
+    } catch (err) {
+      console.error('Departmanlar yüklenemedi:', err);
+    }
+  };
+
+  // Departman adını bulma fonksiyonu
+  const getDepartmentName = (departmentId?: string): string => {
+    if (!departmentId) return 'Atanmamış';
+    const department = departments.find(dept => dept.id === departmentId);
+    return department?.name || 'Bilinmeyen Departman';
+  };
 
   // Kullanıcıları yükleme
   const loadUsers = async (filters?: UserFilters) => {
@@ -48,12 +72,39 @@ const Users: React.FC = () => {
   };
 
   useEffect(() => {
-    loadUsers();
+    // Önce departmanları, sonra kullanıcıları yükle
+    const initializeData = async () => {
+      await loadDepartments();
+      await loadUsers();
+    };
+    initializeData();
   }, []);
 
-  // Arama işlemi
-  const handleSearch = () => {
-    loadUsers({ search: searchTerm });
+  // Arama ve filtreleme işlemi
+  const handleFilter = () => {
+    const filters: UserFilters = {};
+    
+    if (searchTerm.trim()) {
+      filters.search = searchTerm.trim();
+    }
+    
+    if (selectedDepartment) {
+      filters.departmentId = selectedDepartment;
+    }
+    
+    if (selectedStatus) {
+      filters.status = selectedStatus;
+    }
+    
+    loadUsers(filters);
+  };
+
+  // Filtreleri temizle
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedDepartment('');
+    setSelectedStatus('');
+    loadUsers();
   };
 
   // Kullanıcı seçme/seçimi kaldırma
@@ -76,9 +127,13 @@ const Users: React.FC = () => {
 
   // Edit modal aç/kapat
   const openEditModal = (user: User) => {
-    setEditForm(user);
+    setEditForm({
+      ...user,
+      departmentId: user.departmentId || user.department?.id || ''
+    });
     setEditModal({ show: true, user });
   };
+
   const closeEditModal = () => {
     setEditModal({ show: false });
     setEditForm(null);
@@ -140,7 +195,10 @@ const Users: React.FC = () => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="mb-1 fw-bold">👥 Kullanıcı Yönetimi</h4>
-          <p className="text-muted mb-0">Sistem kullanıcılarını görüntüle ve yönet</p>
+          <p className="text-muted mb-0">
+            Sistem kullanıcılarını görüntüle ve yönet 
+            {departments.length > 0 && ` • ${departments.length} departman`}
+          </p>
         </div>
         <div className="d-flex gap-2">
           <button className="btn btn-outline-primary btn-sm">
@@ -161,7 +219,7 @@ const Users: React.FC = () => {
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-body">
           <div className="row g-3">
-            <div className="col-md-6">
+            <div className="col-md-4">
               <div className="input-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
@@ -172,28 +230,50 @@ const Users: React.FC = () => {
                   placeholder="Kullanıcı ara (isim, email)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  onKeyPress={(e) => e.key === 'Enter' && handleFilter()}
                 />
-                <button className="btn btn-outline-primary" onClick={handleSearch}>
-                  Ara
-                </button>
               </div>
             </div>
             <div className="col-md-3">
-              <select className="form-select">
+              <select 
+                className="form-select" 
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+              >
                 <option value="">Tüm Departmanlar</option>
-                <option value="it">BT Departmanı</option>
-                <option value="hr">İK Departmanı</option>
-                <option value="ops">Operasyon</option>
+                {departments.map(dept => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-md-3">
-              <select className="form-select">
+              <select 
+                className="form-select"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
                 <option value="">Tüm Durumlar</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Pasif</option>
-                <option value="suspended">Askıya Alınmış</option>
+                <option value="Active">Aktif</option>
+                <option value="Inactive">Pasif</option>
+                <option value="Suspended">Askıya Alınmış</option>
               </select>
+            </div>
+            <div className="col-md-2">
+              <div className="d-flex gap-1">
+                <button className="btn btn-outline-primary flex-fill" onClick={handleFilter}>
+                  <i className="bi bi-funnel me-1"></i>
+                  Filtrele
+                </button>
+                <button 
+                  className="btn btn-outline-secondary"
+                  onClick={clearFilters}
+                  title="Filtreleri Temizle"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -236,7 +316,9 @@ const Users: React.FC = () => {
               <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">Yükleniyor...</span>
               </div>
-              <p className="mt-2 text-muted">Kullanıcılar yükleniyor...</p>
+              <p className="mt-2 text-muted">
+                {departments.length === 0 ? 'Departmanlar ve kullanıcılar yükleniyor...' : 'Kullanıcılar yükleniyor...'}
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-5">
@@ -301,8 +383,8 @@ const Users: React.FC = () => {
                         <span className="text-muted">{user.email}</span>
                       </td>
                       <td>
-                        <span className="badge bg-light text-dark">
-                          {user.department?.name || user.department || 'Atanmamış'}
+                        <span className="badge bg-light text-dark border">
+                          {getDepartmentName(user.departmentId || user.department?.id)}
                         </span>
                       </td>
                       <td>
@@ -410,12 +492,18 @@ const Users: React.FC = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Departman</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={editForm.department?.name || ''}
-                      onChange={e => setEditForm({ ...editForm, department: { name: e.target.value } })}
-                    />
+                    <select
+                      className="form-select"
+                      value={editForm.departmentId || ''}
+                      onChange={e => setEditForm({ ...editForm, departmentId: e.target.value })}
+                    >
+                      <option value="">Departman Seçin</option>
+                      {departments.map(dept => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Rol</label>
