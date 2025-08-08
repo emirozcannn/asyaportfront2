@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { loginUser } from './api2/supabaseAuth';
 import { useNavigate } from 'react-router-dom';
-
+//furkan
 const Login: React.FC = () => {
   const [email, setEmail] = useState('bt.mudur@asyaport.com');
   const [password, setPassword] = useState('alper1emir');
