@@ -132,31 +132,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
               >
                 <i className="bi bi-list"></i>
               </button>
-              
-              {/* ASYAPORT Logo/Marka */}
-              <div className="navbar-brand d-flex align-items-center mb-0">
-                <div className="asyaport-logo-container">
-                  {/* Logo placeholder - Sen buraya kendi logonu ekleyeceksin */}
-                  <div className="asyaport-logo">
-                    <img 
-                      src="/path/to/your/logo.png" 
-                      alt="ASYAPORT Logo" 
-                      className="logo-img"
-                      onError={(e) => {
-                        // Logo yüklenemezse placeholder göster
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling.style.display = 'flex';
-                      }}
-                    />
-                    {/* Logo yüklenemediğinde gösterilecek placeholder */}
-                    <div className="logo-placeholder">
-                      <i className="bi bi-image"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
+  
             </div>
-
             {/* Sağ taraf - Sadece Profil */}
             <div className="d-flex align-items-center gap-2">
 
@@ -250,6 +227,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
           min-height: 65px;
           position: relative;
           overflow: hidden;
+         
+
         }
         
         .navbar-asyaport::after {

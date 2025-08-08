@@ -13,7 +13,10 @@ export const updateDepartment = async (id: string, departmentData: UpdateDepartm
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(departmentData),
+      body: JSON.stringify({
+        ...departmentData,
+        id: id  // URL'deki ID'yi body'e de ekle
+      }),
     });
 
     if (!response.ok) {
@@ -47,5 +50,3 @@ export const validateUpdateDepartment = (data: UpdateDepartmentDto): string[] =>
   
   return errors;
 };
-
- 

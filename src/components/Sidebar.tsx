@@ -346,7 +346,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           overflow: hidden;
           display: flex;
           flex-direction: column;
-          border-radius: 8px;
+          
         }
 
         .sidebar-header {
