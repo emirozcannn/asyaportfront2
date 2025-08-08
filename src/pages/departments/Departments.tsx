@@ -102,12 +102,16 @@ export const Departments: React.FC = () => {
 
   const showAlert = (message: string, type: 'success' | 'danger' | 'info' = 'info') => {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed shadow-lg border-0`;
     alertDiv.style.top = '20px';
     alertDiv.style.right = '20px';
     alertDiv.style.zIndex = '9999';
+    alertDiv.style.borderRadius = '12px';
     alertDiv.innerHTML = `
-      ${message}
+      <div class="d-flex align-items-center">
+        <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
+        <span>${message}</span>
+      </div>
       <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
     `;
     document.body.appendChild(alertDiv);
@@ -118,96 +122,92 @@ export const Departments: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container-fluid p-4">
-        <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-          <div className="spinner-border text-primary mb-3" style={{ width: '4rem', height: '4rem' }}></div>
-          <h4 className="text-muted">Departmanlar yükleniyor...</h4>
+      <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
+          <div className="card border-0 shadow-sm p-5 text-center" style={{ borderRadius: '8px', backgroundColor: '#ffffff' }}>
+            <div className="spinner-border text-primary mb-4" style={{ width: '4rem', height: '4rem' }}></div>
+            <h4 className="text-dark fw-bold mb-2">Departmanlar Yükleniyor...</h4>
+            <p className="text-muted">Lütfen bekleyiniz</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid p-4">
+    <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-1">
-              <li className="breadcrumb-item">
-                <a href="#" className="text-decoration-none text-primary">
-                  <i className="bi bi-house-door me-1"></i>
-                  Ana Sayfa
-                </a>
-              </li>
-              <li className="breadcrumb-item active" aria-current="page">Departmanlar</li>
-            </ol>
-          </nav>
-          <div className="d-flex align-items-center mb-2">
-            <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-              <i className="bi bi-building text-primary fs-4"></i>
+      <div className="card border-0 shadow-sm mb-5" style={{ borderRadius: '8px', backgroundColor: '#ffffff' }}>
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <nav aria-label="breadcrumb">
+                <ol className="breadcrumb mb-3">
+                  <li className="breadcrumb-item">
+                    <a href="#" className="text-decoration-none text-primary">
+                      <i className="bi bi-house-door me-1"></i>
+                      Ana Sayfa
+                    </a>
+                  </li>
+                  <li className="breadcrumb-item active text-muted" aria-current="page">Departmanlar</li>
+                </ol>
+              </nav>
+              <div className="d-flex align-items-center">
+                <div className="bg-primary bg-opacity-10 rounded p-2 me-3">
+                  <i className="bi bi-building text-primary fs-4"></i>
+                </div>
+                <div>
+                  <h2 className="mb-1 fw-bold text-dark">Departman Yönetimi</h2>
+                  <p className="text-muted mb-0">Sistemdeki departmanları görüntüleyin ve yönetin</p>
+                </div>
+              </div>
             </div>
             <div>
-              <h2 className="mb-0 fw-bold text-dark">Departman Yönetimi</h2>
-              <p className="text-muted mb-0 fs-6">Sistemdeki departmanları görüntüleyin ve yönetin</p>
+            
             </div>
           </div>
-        </div>
-        <div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn btn-primary btn-lg d-flex align-items-center"
-          >
-            <i className="bi bi-plus-lg me-2"></i>
-            Departman Ekle
-          </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="row g-4 mb-4">
+        <div className="row g-4 mb-5">
           <div className="col-md-3">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body text-center">
-                <div className="bg-primary bg-opacity-10 rounded-circle p-3 mb-2 d-inline-block">
-                  <i className="bi bi-building text-primary fs-4"></i>
+            <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '8px', transition: 'all 0.3s ease' }}>
+              <div className="card-body text-center p-4">
+                <div className="bg-primary bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
+                  <i className="bi bi-building text-primary fs-3"></i>
                 </div>
-                <h5 className="fw-bold mb-1">{stats.totalDepartments}</h5>
-                <p className="text-muted mb-0">Toplam Departman</p>
+                <h3 className="fw-bold mb-2 text-primary">{stats.totalDepartments}</h3>
+                <p className="text-muted mb-0 fw-medium">Toplam Departman</p>
               </div>
             </div>
           </div>
           <div className="col-md-3">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body text-center">
-                <div className="bg-success bg-opacity-10 rounded-circle p-3 mb-2 d-inline-block">
-                  <i className="bi bi-star text-success fs-4"></i>
+            <div className="card border-0 shadow-sm h-100 hover-effect" style={{ borderRadius: '16px', transition: 'all 0.3s ease' }}>
+              <div className="card-body text-center p-4">
+                <div className="bg-success bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
+                  <i className="bi bi-star text-success fs-3"></i>
                 </div>
-                <h5 className="fw-bold mb-1">{stats.latestDepartment?.name || 'N/A'}</h5>
-                <p className="text-muted mb-0">Son Departman</p>
+                <h6 className="fw-bold mb-2 text-success">{stats.latestDepartment?.name || 'N/A'}</h6>
+                <p className="text-muted mb-0 fw-medium">Son Departman</p>
               </div>
             </div>
           </div>
-          <div className="col-md-3">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body text-center">
-                <div className="bg-info bg-opacity-10 rounded-circle p-3 mb-2 d-inline-block">
-                  <i className="bi bi-calendar text-info fs-4"></i>
+          <div className="col-md-6">
+            <div className="card border-0 shadow-sm h-100 hover-effect" style={{ borderRadius: '16px', transition: 'all 0.3s ease' }}>
+              <div className="card-body text-center p-4">
+                <div className="bg-warning bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
+                  <i className="bi bi-tags text-warning fs-3"></i>
                 </div>
-                <h5 className="fw-bold mb-1">{stats.averageDepartmentsPerMonth}</h5>
-                <p className="text-muted mb-0">Aylık Ortalama</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body text-center">
-                <div className="bg-warning bg-opacity-10 rounded-circle p-3 mb-2 d-inline-block">
-                  <i className="bi bi-tags text-warning fs-4"></i>
+                <div className="d-flex flex-wrap justify-content-center gap-2 mb-2">
+                  {stats.departmentCodes.map((code, index) => (
+                    <span key={index} className="badge bg-warning text-dark fw-semibold px-3 py-2" style={{ fontSize: '0.9rem', borderRadius: '8px' }}>
+                      {code}
+                    </span>
+                  ))}
                 </div>
-                <h6 className="fw-bold mb-1">{stats.departmentCodes.join(', ')}</h6>
-                <p className="text-muted mb-0">Departman Kodları</p>
+                <p className="text-muted mb-0 fw-medium">Departman Kodları</p>
               </div>
             </div>
           </div>
@@ -217,82 +217,127 @@ export const Departments: React.FC = () => {
       {/* Search and Filter */}
       <div className="row mb-4">
         <div className="col-md-6 col-lg-4">
-          <div className="input-group">
-            <span className="input-group-text bg-transparent border-end-0">
-              <i className="bi bi-search text-muted"></i>
-            </span>
-            <input
-              type="text"
-              className="form-control border-start-0"
-              placeholder="Departman ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '8px' }}>
+            <div className="card-body p-3">
+              <div className="input-group">
+                <span className="input-group-text bg-transparent border-0">
+                  <i className="bi bi-search text-muted"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent"
+                  placeholder="Departman ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ fontSize: '1rem' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Departments Table */}
-      <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white border-bottom">
+      <div className="card border-0 shadow-sm" style={{ borderRadius: '8px' }}>
+        <div className="card-header border-0 p-4" style={{ backgroundColor: '#ffffff', borderRadius: '8px 8px 0 0' }}>
           <div className="d-flex align-items-center">
-            <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-              <i className="bi bi-list-ul text-primary"></i>
+            <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+              <i className="bi bi-list-ul text-primary fs-4"></i>
             </div>
-            <h5 className="mb-0 fw-bold text-dark">Departman Listesi</h5>
+            <h4 className="mb-0 fw-bold text-dark">Departman Listesi</h4>
           </div>
         </div>
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
+              <thead className="bg-light">
                 <tr>
                   <th
-                    className="cursor-pointer"
+                    className="text-dark fw-semibold cursor-pointer border-0 px-4 py-3"
                     onClick={() => handleSort('name')}
+                    style={{ fontSize: '0.95rem' }}
                   >
-                    Ad {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="d-flex align-items-center">
+                      <i className="bi bi-person-badge me-2"></i>
+                      Departman Adı
+                      {sortBy === 'name' && (
+                        <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'} ms-2`}></i>
+                      )}
+                    </div>
                   </th>
                   <th
-                    className="cursor-pointer"
+                    className="text-dark fw-semibold cursor-pointer border-0 px-4 py-3"
                     onClick={() => handleSort('code')}
+                    style={{ fontSize: '0.95rem' }}
                   >
-                    Kod {sortBy === 'code' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="d-flex align-items-center">
+                      <i className="bi bi-tag me-2"></i>
+                      Kod
+                      {sortBy === 'code' && (
+                        <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'} ms-2`}></i>
+                      )}
+                    </div>
                   </th>
                   <th
-                    className="cursor-pointer"
+                    className="text-dark fw-semibold cursor-pointer border-0 px-4 py-3"
                     onClick={() => handleSort('createdAt')}
+                    style={{ fontSize: '0.95rem' }}
                   >
-                    Oluşturulma Tarihi {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="d-flex align-items-center">
+                      <i className="bi bi-calendar-check me-2"></i>
+                      Oluşturulma Tarihi
+                      {sortBy === 'createdAt' && (
+                        <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'} ms-2`}></i>
+                      )}
+                    </div>
                   </th>
-                  <th>İşlemler</th>
+                  <th className="text-dark fw-semibold border-0 px-4 py-3" style={{ fontSize: '0.95rem' }}>
+                    <div className="d-flex align-items-center">
+                      <i className="bi bi-gear me-2"></i>
+                      İşlemler
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedDepartments.map((department) => (
-                  <tr key={department.id}>
-                    <td>
-                      <div className="fw-bold">{department.name}</div>
+                {filteredAndSortedDepartments.map((department, index) => (
+                  <tr key={department.id} className="border-0" style={{ backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white' }}>
+                    <td className="px-4 py-3">
+                      <div className="d-flex align-items-center">
+                        <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                          <i className="bi bi-building text-primary"></i>
+                        </div>
+                        <div className="fw-semibold text-dark" style={{ fontSize: '1.05rem' }}>{department.name}</div>
+                      </div>
                     </td>
-                    <td>
-                      <span className="badge bg-primary">{department.code}</span>
+                    <td className="px-4 py-3">
+                      <span className="badge bg-primary px-3 py-2 fw-semibold" style={{ fontSize: '0.9rem', borderRadius: '8px' }}>
+                        {department.code}
+                      </span>
                     </td>
-                    <td>
-                      {new Date(department.createdAt).toLocaleDateString('tr-TR')}
+                    <td className="px-4 py-3">
+                      <div className="d-flex align-items-center text-muted">
+                        <i className="bi bi-calendar3 me-2"></i>
+                        <span style={{ fontSize: '0.95rem' }}>
+                          {new Date(department.createdAt).toLocaleDateString('tr-TR')}
+                        </span>
+                      </div>
                     </td>
-                    <td>
+                    <td className="px-4 py-3">
                       <div className="d-flex gap-2">
                         <button
-                          className="btn btn-outline-primary btn-sm"
+                          className="btn btn-outline-primary btn-sm shadow-sm"
                           onClick={() => handleEdit(department)}
+                          style={{ borderRadius: '6px', padding: '8px 16px' }}
                         >
-                          <i className="bi bi-pencil"></i> Düzenle
+                          <i className="bi bi-pencil me-1"></i> Düzenle
                         </button>
                         <button
-                          className="btn btn-outline-danger btn-sm"
+                          className="btn btn-outline-danger btn-sm shadow-sm"
                           onClick={() => handleDelete(department.id, department.name)}
+                          style={{ borderRadius: '6px', padding: '8px 16px' }}
                         >
-                          <i className="bi bi-trash"></i> Sil
+                          <i className="bi bi-trash me-1"></i> Sil
                         </button>
                       </div>
                     </td>
@@ -302,8 +347,15 @@ export const Departments: React.FC = () => {
             </table>
             {filteredAndSortedDepartments.length === 0 && (
               <div className="text-center py-5 text-muted">
-                <i className="bi bi-inbox fs-1"></i>
-                <div>Departman bulunamadı</div>
+                                    <div className="card border-0 shadow-sm mx-auto" style={{ maxWidth: '400px', borderRadius: '8px' }}>
+                  <div className="card-body p-5">
+                    <div className="bg-light rounded-circle p-4 mb-4 d-inline-block">
+                      <i className="bi bi-inbox fs-1 text-muted"></i>
+                    </div>
+                    <h5 className="fw-bold text-dark mb-2">Departman Bulunamadı</h5>
+                    <p className="text-muted mb-0">Arama kriterlerinize uygun departman bulunmamaktadır.</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -330,6 +382,23 @@ export const Departments: React.FC = () => {
           onCancel={() => setEditingDepartment(null)}
         />
       )}
+
+      <style jsx>{`
+        .cursor-pointer {
+          cursor: pointer;
+        }
+        .cursor-pointer:hover {
+          background-color: rgba(0,0,0,0.05) !important;
+        }
+        .table tbody tr:hover {
+          background-color: rgba(13, 110, 253, 0.08) !important;
+          transition: all 0.2s ease;
+        }
+        .btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+      `}</style>
     </div>
   );
 };
@@ -361,53 +430,66 @@ const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
   };
 
   return (
-    <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+    <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content border-0 shadow">
-          <div className="modal-header bg-primary text-white">
-            <h5 className="modal-title">
-              <i className="bi bi-pencil me-2"></i>
+        <div className="modal-content border-0 shadow-sm" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+          <div className="modal-header border-0 p-4 bg-primary">
+            <h4 className="modal-title text-white fw-bold mb-0">
+              <i className="bi bi-pencil me-3"></i>
               Departmanı Düzenle
-            </h5>
+            </h4>
             <button type="button" className="btn-close btn-close-white" onClick={onCancel}></button>
           </div>
           <form onSubmit={handleSubmit}>
-            <div className="modal-body">
-              <div className="mb-3">
-                <label className="form-label fw-medium">Departman Adı <span className="text-danger">*</span></label>
+            <div className="modal-body p-4">
+              <div className="mb-4">
+                <label className="form-label fw-semibold text-dark mb-2">
+                  <i className="bi bi-building me-2"></i>
+                  Departman Adı <span className="text-danger">*</span>
+                </label>
                 <input
                   type="text"
-                  className="form-control"
+                  className="form-control shadow-sm border-0 bg-light"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  style={{ borderRadius: '6px', padding: '12px 16px', fontSize: '1rem' }}
                 />
               </div>
-              <div className="mb-3">
-                <label className="form-label fw-medium">Departman Kodu <span className="text-danger">*</span></label>
+              <div className="mb-4">
+                <label className="form-label fw-semibold text-dark mb-2">
+                  <i className="bi bi-tag me-2"></i>
+                  Departman Kodu <span className="text-danger">*</span>
+                </label>
                 <input
                   type="text"
-                  className="form-control"
+                  className="form-control shadow-sm border-0 bg-light"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   maxLength={4}
                   required
+                  style={{ borderRadius: '6px', padding: '12px 16px', fontSize: '1rem' }}
                 />
               </div>
             </div>
-            <div className="modal-footer bg-light">
+            <div className="modal-footer border-0 p-4 bg-light">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-light shadow-sm"
                 onClick={onCancel}
+                style={{ borderRadius: '6px', padding: '10px 20px' }}
               >
-                <i className="bi bi-x-lg me-1"></i>
+                <i className="bi bi-x-lg me-2"></i>
                 İptal
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary shadow-sm"
                 disabled={isLoading}
+                style={{ 
+                  borderRadius: '6px', 
+                  padding: '10px 20px'
+                }}
               >
                 {isLoading ? (
                   <>
@@ -416,7 +498,7 @@ const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <i className="bi bi-check-lg me-1"></i>
+                    <i className="bi bi-check-lg me-2"></i>
                     Güncelle
                   </>
                 )}
