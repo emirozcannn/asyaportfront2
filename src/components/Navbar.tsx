@@ -23,9 +23,7 @@ interface UserInfo {
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
   const navigate = useNavigate();
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
-  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Load user info from localStorage on component mount
   useEffect(() => {
@@ -57,18 +55,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // Click outside to close dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -107,10 +93,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
     return 'U';
   };
 
-  const getUserEmail = () => {
-    return userInfo.email || 'user@example.com';
-  };
-
   return (
     <>
       <nav className="navbar navbar-expand-lg navbar-asyaport position-sticky top-0" style={{ zIndex: 1030 }}>
@@ -132,87 +114,53 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
               >
                 <i className="bi bi-list"></i>
               </button>
-  
             </div>
-            {/* Sağ taraf - Sadece Profil */}
-            <div className="d-flex align-items-center gap-2">
 
-              {/* Profil */}
-              <div className="dropdown position-relative" ref={userMenuRef}>
-                <div 
-                  className="d-flex align-items-center gap-2 px-2 py-1 rounded user-profile-area"
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  style={{ cursor: 'pointer', border: '1px solid transparent' }}
-                >
-                  {/* Desktop - Kullanıcı Bilgileri */}
-                  <div className="d-none d-md-flex flex-column text-end">
-                    <span className="fw-semibold" style={{ fontSize: '13px', lineHeight: '1.2', color: '#ffffff' }}>
-                      {getUserDisplayName()}
-                    </span>
-                    <small style={{ fontSize: '11px', lineHeight: '1.2', color: '#cccccc' }}>
-                      {getUserEmail()}
-                    </small>
-                  </div>
-                  
-                  {/* Avatar */}
-                  <div 
-                    className="rounded-circle d-flex align-items-center justify-content-center text-dark fw-bold"
-                    style={{ 
-                      width: '36px', 
-                      height: '36px',
-                      fontSize: '14px',
-                      background: 'linear-gradient(135deg, #ffd700 0%, #ffcc00 100%)',
-                      border: '2px solid #333333'
-                    }}
-                  >
-                    {getUserInitials()}
-                  </div>
-                  
-                  <i className="bi bi-chevron-down d-none d-md-block" style={{ fontSize: '12px', color: '#cccccc' }}></i>
+            {/* Sağ taraf - Kullanıcı Bilgileri ve Çıkış */}
+            <div className="d-flex align-items-center gap-3">
+              
+              {/* Kullanıcı Bilgileri */}
+              <div className="d-flex align-items-center gap-2">
+                {/* Desktop - Kullanıcı Bilgileri */}
+                <div className="d-none d-md-flex flex-column text-end">
+                  <span className="fw-semibold" style={{ fontSize: '13px', lineHeight: '1.2', color: '#ffffff' }}>
+                    {getUserDisplayName()}
+                  </span>
                 </div>
-
-                {showUserMenu && (
-                  <div className="dropdown-menu show shadow border-0" style={{ 
-                    right: 0, 
-                    left: 'auto', 
-                    minWidth: '250px',
-                    marginTop: '8px',
-                    borderRadius: '8px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <div className="dropdown-header bg-light">
-                      <div className="d-flex align-items-center gap-2">
-                        <div 
-                          className="rounded-circle d-flex align-items-center justify-content-center text-dark fw-bold"
-                          style={{ 
-                            width: '32px', 
-                            height: '32px',
-                            fontSize: '12px',
-                            background: 'linear-gradient(135deg, #ffd700 0%, #ffcc00 100%)'
-                          }}
-                        >
-                          {getUserInitials()}
-                        </div>
-                        <div>
-                          <div className="fw-semibold text-dark" style={{ fontSize: '14px' }}>{getUserDisplayName()}</div>
-                          <small className="text-muted" style={{ fontSize: '12px' }}>{getUserEmail()}</small>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-2">
-                      <button 
-                        className="dropdown-item d-flex align-items-center py-2 px-3 rounded text-start w-100" 
-                        onClick={handleLogout}
-                        style={{ border: 'none', background: 'none' }}
-                      >
-                        <i className="bi bi-box-arrow-right text-danger me-2"></i>
-                        <span className="text-danger fw-semibold">Çıkış Yap</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                
+                {/* Avatar */}
+                <div 
+                  className="rounded-circle d-flex align-items-center justify-content-center text-dark fw-bold"
+                  style={{ 
+                    width: '36px', 
+                    height: '36px',
+                    fontSize: '14px',
+                    background: 'linear-gradient(135deg, #ffd700 0%, #ffcc00 100%)',
+                    border: '2px solid #333333'
+                  }}
+                >
+                  {getUserInitials()}
+                </div>
               </div>
+
+              {/* Çıkış Butonu */}
+              <button 
+                className="btn logout-btn d-flex align-items-center gap-2"
+                onClick={handleLogout}
+                style={{ 
+                  background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                  border: '1px solid #bd2130',
+                  color: '#ffffff',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <i className="bi bi-box-arrow-right"></i>
+                <span className="d-none d-sm-inline">Çıkış</span>
+              </button>
             </div>
           </div>
         </div>
@@ -227,8 +175,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
           min-height: 65px;
           position: relative;
           overflow: hidden;
-         
-
         }
         
         .navbar-asyaport::after {
@@ -263,57 +209,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
           }
         }
 
-        .asyaport-logo-container {
-          display: flex;
-          align-items: center;
-        }
-        
-        .asyaport-logo {
-          width: 40px;
-          height: 40px;
-          position: relative;
-        }
-        
-        .logo-img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          border-radius: 4px;
-        }
-        
-        .logo-placeholder {
-          width: 40px;
-          height: 40px;
-          background-color: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #6c757d;
-          font-size: 18px;
-        }
-
-        .user-profile-area:hover {
-          background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
-          border-color: #666666 !important;
-          border-radius: 12px;
+        .logout-btn:hover {
+          background: linear-gradient(135deg, #c82333 0%, #bd2130 100%) !important;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
 
-        .dropdown-menu {
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .dropdown-item:hover {
-          background-color: #f8f9fa;
-        }
-
-        .dropdown-header {
-          border-bottom: 1px solid #e9ecef;
-          padding: 12px 16px;
+        .logout-btn:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
         }
 
         /* Mobile uyumluluğu */
@@ -323,8 +227,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, pageTitle = "" }) => {
             min-height: 60px;
           }
           
-          .dropdown-menu {
-            font-size: 14px;
+          .logout-btn {
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+          }
+        }
+
+        @media (max-width: 575.98px) {
+          .logout-btn {
+            padding: 8px 10px !important;
           }
         }
       `}</style>
