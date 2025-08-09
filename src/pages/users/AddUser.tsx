@@ -1,40 +1,106 @@
-// src/pages/users/AddUser.tsx - Düzeltilmiş versiyon
-import React, { useState } from 'react';
+// src/pages/users/AddUser.tsx - Database schema'ya uygun versiyon
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUser } from '../../api/users';
+import { getAllDepartments } from '../../api/departments/getAllDepartments';
+import type { Department } from '../../api/types/department';
 
-// Local types - import sorunlarını önlemek için
+// API request format (database schema'ya uygun)
 interface CreateUserRequest {
-  fullName: string;
+  employee_number: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  password: string;
-  role?: string;
-  departmentId?: string;
+  password_hash: string;
+  department_id: string;  // ZORUNLU
+  role: string;
+  is_active: boolean;
+  // created_at field'ını eklemeyin - database DEFAULT now() kullanacak
 }
 
-type UserRole = 'SuperAdmin' | 'Admin' | 'DepartmentAdmin' | 'User';
+// Form data type (UI için)
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  employeeNumber: string;
+  departmentId: string;
+  role: string;
+}
+
+// Database schema'daki valid roller
+const VALID_ROLES = [
+  { value: 'User', label: '👤 Kullanıcı', description: 'Temel kullanıcı yetkileri' },
+  { value: 'ServiceStaff', label: '🔧 Servis Personeli', description: 'Bakım ve servis işlemleri' },
+  { value: 'departmentAdmin', label: '👥 Departman Yöneticisi', description: 'Departman yönetimi' },
+  { value: 'SuperAdmin', label: '⚡ Süper Yönetici', description: 'Tüm sistem yetkileri' }
+];
+
+// Basit password hash fonksiyonu (production'da daha güçlü olmalı)
+const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+// Employee number generator
+const generateEmployeeNumber = (): string => {
+  const prefix = 'AP';
+  const number = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+  return `${prefix}${number}`;
+};
 
 const AddUser: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
 
-  const [formData, setFormData] = useState<CreateUserRequest>({
-    fullName: '',
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
+    employeeNumber: generateEmployeeNumber(),
+    departmentId: '',
     role: 'User',
   });
 
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
 
+  // Departmanları yükle
+  const loadDepartments = async () => {
+    try {
+      setLoadingDepartments(true);
+      const departmentsData = await getAllDepartments();
+      setDepartments(departmentsData);
+    } catch (err) {
+      console.error('Departmanlar yüklenemedi:', err);
+      setError('Departmanlar yüklenemedi');
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDepartments();
+  }, []);
+
   // Form validation
   const validateForm = (): boolean => {
     const errors: {[key: string]: string} = {};
 
-    if (!formData.fullName.trim()) {
-      errors.fullName = 'Ad Soyad zorunludur';
+    if (!formData.firstName.trim()) {
+      errors.firstName = 'Ad zorunludur';
+    }
+
+    if (!formData.lastName.trim()) {
+      errors.lastName = 'Soyad zorunludur';
     }
 
     if (!formData.email.trim()) {
@@ -47,6 +113,14 @@ const AddUser: React.FC = () => {
       errors.password = 'Şifre zorunludur';
     } else if (formData.password.length < 6) {
       errors.password = 'Şifre en az 6 karakter olmalıdır';
+    }
+
+    if (!formData.employeeNumber.trim()) {
+      errors.employeeNumber = 'Personel numarası zorunludur';
+    }
+
+    if (!formData.departmentId) {
+      errors.departmentId = 'Departman seçimi zorunludur';
     }
 
     setFormErrors(errors);
@@ -64,20 +138,45 @@ const AddUser: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Backend expects departmentId as UUID or null, not 'it', 'hr', etc.
-      const payload = {
-        ...formData,
-        departmentId: formData.departmentId ? formData.departmentId : undefined
+      // Password'u hash'le
+      const hashedPassword = await hashPassword(formData.password);
+
+      // API request payload'ını hazırla (database schema'ya uygun)
+      // created_at field'ını eklemeyin - database DEFAULT now() kullanacak
+      const payload: CreateUserRequest = {
+        employee_number: formData.employeeNumber,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password_hash: hashedPassword,
+        department_id: formData.departmentId,
+        role: formData.role,
+        is_active: true
+        // created_at: EKLEMEYIN - database default'u kullanacak
       };
 
       await createUser(payload);
-
       setSuccess(true);
+      
       setTimeout(() => {
         navigate('/dashboard/users');
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kullanıcı oluşturulamadı');
+      let errorMessage = 'Kullanıcı oluşturulamadı';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('chk_users_role')) {
+          errorMessage = 'Geçersiz rol seçimi. Lütfen geçerli bir rol seçin.';
+        } else if (err.message.includes('email') && err.message.includes('unique')) {
+          errorMessage = 'Bu e-posta adresi zaten kullanılıyor';
+        } else if (err.message.includes('employee_number') && err.message.includes('unique')) {
+          errorMessage = 'Bu personel numarası zaten kullanılıyor';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,6 +199,14 @@ const AddUser: React.FC = () => {
     }
   };
 
+  // Generate new employee number
+  const handleGenerateEmployeeNumber = () => {
+    setFormData(prev => ({
+      ...prev,
+      employeeNumber: generateEmployeeNumber()
+    }));
+  };
+
   if (success) {
     return (
       <div className="container-fluid p-4">
@@ -112,7 +219,7 @@ const AddUser: React.FC = () => {
                 </div>
                 <h4 className="text-success mb-3">Kullanıcı Başarıyla Oluşturuldu! 🎉</h4>
                 <p className="text-muted mb-4">
-                  <strong>{formData.fullName}</strong> adlı kullanıcı sisteme başarıyla eklendi.
+                  <strong>{formData.firstName} {formData.lastName}</strong> adlı kullanıcı sisteme başarıyla eklendi.
                 </p>
                 <div className="d-flex justify-content-center gap-2">
                   <button 
@@ -127,9 +234,12 @@ const AddUser: React.FC = () => {
                     onClick={() => {
                       setSuccess(false);
                       setFormData({
-                        fullName: '',
+                        firstName: '',
+                        lastName: '',
                         email: '',
                         password: '',
+                        employeeNumber: generateEmployeeNumber(),
+                        departmentId: '',
                         role: 'User',
                       });
                     }}
@@ -181,24 +291,50 @@ const AddUser: React.FC = () => {
                 </div>
               )}
 
+              {loadingDepartments && (
+                <div className="alert alert-info d-flex align-items-center" role="alert">
+                  <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                  <div>Departmanlar yükleniyor...</div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit}>
                 <div className="row g-3">
-                  {/* Ad Soyad */}
+                  {/* Ad */}
                   <div className="col-md-6">
-                    <label htmlFor="fullName" className="form-label">
-                      Ad Soyad <span className="text-danger">*</span>
+                    <label htmlFor="firstName" className="form-label">
+                      Ad <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
-                      className={`form-control ${formErrors.fullName ? 'is-invalid' : ''}`}
-                      id="fullName"
-                      name="fullName"
-                      value={formData.fullName}
+                      className={`form-control ${formErrors.firstName ? 'is-invalid' : ''}`}
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
                       onChange={handleInputChange}
-                      placeholder="Kullanıcının tam adını girin"
+                      placeholder="Kullanıcının adı"
                     />
-                    {formErrors.fullName && (
-                      <div className="invalid-feedback">{formErrors.fullName}</div>
+                    {formErrors.firstName && (
+                      <div className="invalid-feedback">{formErrors.firstName}</div>
+                    )}
+                  </div>
+
+                  {/* Soyad */}
+                  <div className="col-md-6">
+                    <label htmlFor="lastName" className="form-label">
+                      Soyad <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${formErrors.lastName ? 'is-invalid' : ''}`}
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      placeholder="Kullanıcının soyadı"
+                    />
+                    {formErrors.lastName && (
+                      <div className="invalid-feedback">{formErrors.lastName}</div>
                     )}
                   </div>
 
@@ -221,8 +357,37 @@ const AddUser: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Şifre */}
+                  {/* Personel Numarası */}
                   <div className="col-md-6">
+                    <label htmlFor="employeeNumber" className="form-label">
+                      Personel Numarası <span className="text-danger">*</span>
+                    </label>
+                    <div className="input-group">
+                      <input
+                        type="text"
+                        className={`form-control ${formErrors.employeeNumber ? 'is-invalid' : ''}`}
+                        id="employeeNumber"
+                        name="employeeNumber"
+                        value={formData.employeeNumber}
+                        onChange={handleInputChange}
+                        placeholder="AP1234"
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={handleGenerateEmployeeNumber}
+                        title="Yeni numara üret"
+                      >
+                        <i className="bi bi-arrow-clockwise"></i>
+                      </button>
+                      {formErrors.employeeNumber && (
+                        <div className="invalid-feedback">{formErrors.employeeNumber}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Şifre */}
+                  <div className="col-md-12">
                     <label htmlFor="password" className="form-label">
                       Şifre <span className="text-danger">*</span>
                     </label>
@@ -243,10 +408,35 @@ const AddUser: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Departman */}
+                  <div className="col-md-6">
+                    <label htmlFor="departmentId" className="form-label">
+                      Departman <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      className={`form-select ${formErrors.departmentId ? 'is-invalid' : ''}`}
+                      id="departmentId"
+                      name="departmentId"
+                      value={formData.departmentId}
+                      onChange={handleInputChange}
+                      disabled={loadingDepartments}
+                    >
+                      <option value="">Departman Seçin</option>
+                      {departments.map(dept => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.departmentId && (
+                      <div className="invalid-feedback">{formErrors.departmentId}</div>
+                    )}
+                  </div>
+
                   {/* Rol */}
                   <div className="col-md-6">
                     <label htmlFor="role" className="form-label">
-                      Kullanıcı Rolü
+                      Kullanıcı Rolü <span className="text-danger">*</span>
                     </label>
                     <select
                       className="form-select"
@@ -255,36 +445,15 @@ const AddUser: React.FC = () => {
                       value={formData.role}
                       onChange={handleInputChange}
                     >
-                      <option value="User">👤 Kullanıcı</option>
-                      <option value="DepartmentAdmin">👥 Departman Yöneticisi</option>
-                      <option value="Admin">⚡ Sistem Yöneticisi</option>
-                      <option value="SuperAdmin">🔧 Süper Yönetici</option>
+                      {VALID_ROLES.map(role => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
+                        </option>
+                      ))}
                     </select>
                     <div className="form-text">
-                      Kullanıcının sistem üzerindeki yetkilerini belirler
+                      {VALID_ROLES.find(r => r.value === formData.role)?.description}
                     </div>
-                  </div>
-
-                  {/* Departman */}
-                  <div className="col-md-12">
-                    <label htmlFor="departmentId" className="form-label">
-                      Departman (Opsiyonel)
-                    </label>
-                    <select
-                      className="form-select"
-                      id="departmentId"
-                      name="departmentId"
-                      value={formData.departmentId || ''}
-                      onChange={handleInputChange}
-                    >
-                      <option value="">Departman Seçin</option>
-                      {/* TODO: Replace these with real department UUIDs from your backend */}
-                      <option value="">Seçim Yok</option>
-                      {/* <option value="30549f61-ed08-4867-bce0-b80a64ae7199">BT Departmanı</option> */}
-                      {/* <option value="...">İnsan Kaynakları</option> */}
-                      {/* <option value="...">Operasyon</option> */}
-                      {/* <option value="...">Mali İşler</option> */}
-                    </select>
                   </div>
                 </div>
 
@@ -302,7 +471,7 @@ const AddUser: React.FC = () => {
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    disabled={loading}
+                    disabled={loading || loadingDepartments}
                   >
                     {loading ? (
                       <>
@@ -334,12 +503,16 @@ const AddUser: React.FC = () => {
                   Yeni kullanıcı sisteme giriş yapmak için e-posta ve şifreyi kullanacak
                 </li>
                 <li className="mb-2">
-                  <i className="bi bi-envelope me-2 text-info"></i>
-                  Kullanıcıya otomatik hoş geldin e-postası gönderilecek
+                  <i className="bi bi-building me-2 text-info"></i>
+                  Departman seçimi zorunludur ve değiştirilebilir
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-key me-2 text-warning"></i>
+                  Şifre güvenli bir şekilde hash'lenerek saklanır
                 </li>
                 <li className="mb-0">
-                  <i className="bi bi-key me-2 text-warning"></i>
-                  Kullanıcı ilk girişte şifresini değiştirebilir
+                  <i className="bi bi-person-badge me-2 text-primary"></i>
+                  Personel numarası benzersiz olmalıdır (örn: AP1234)
                 </li>
               </ul>
             </div>

@@ -286,8 +286,8 @@ const Login = () => {
                         </linearGradient>
                       </defs>
                       <circle cx="30" cy="30" r="22" fill="url(#mobileLogo)"/>
-                      <text x="30" y="37" textAnchor="middle" fill="black" fontSize="16" fontWeight="900">A</text>
-                      <text x="60" y="35" fill="#1f2937" fontSize="16" fontWeight="700" letterSpacing="1">ASYAPORT</text>
+                      <text x="30" y="37" textAnchor="middle" fill="black" fontSize="16" fontWeight="900">AP</text>
+                      <text x="60" y="35" fill="#1f2937" fontSize="16" fontWeight="700" letterSpacing="0.9">ASYAPORT</text>
                     </svg>
                   </div>
                   <h2 className="mobile-title">Zimmet Yönetim Sistemi</h2>
