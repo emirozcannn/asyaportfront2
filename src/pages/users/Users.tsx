@@ -1,6 +1,7 @@
-// src/pages/users/Users.tsx - API uyumlu versiyon
+// src/pages/users/Users.tsx - UserDetailModal entegreli versiyon
 import React, { useState, useEffect } from 'react';
 import { getAllUsers, deleteUser } from '../../api/users';
+import UserDetailModal from './UserDetailModal';
 
 // API'den gelen User type (API response'a uygun)
 interface ApiUser {
@@ -47,6 +48,12 @@ const Users: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; user?: User }>({ show: false });
   const [selectedRole, setSelectedRole] = useState('');
+  
+  // UserDetail Modal states
+  const [userDetailModal, setUserDetailModal] = useState<{ show: boolean; user: User | null }>({
+    show: false,
+    user: null
+  });
 
   // Kullanıcıları yükle
   const loadUsers = async () => {
@@ -95,6 +102,16 @@ const Users: React.FC = () => {
     } else {
       setSelectedUsers(filteredUsers.map(user => user.id));
     }
+  };
+
+  // UserDetail modal aç
+  const openUserDetailModal = (user: User) => {
+    setUserDetailModal({ show: true, user });
+  };
+
+  // UserDetail modal kapat
+  const closeUserDetailModal = () => {
+    setUserDetailModal({ show: false, user: null });
   };
 
   // Delete modal aç/kapat
@@ -344,7 +361,7 @@ const Users: React.FC = () => {
                         <div className="d-flex gap-1">
                           <button
                             className="btn btn-outline-primary btn-sm"
-                            onClick={() => window.location.href = `/dashboard/users/${user.id}`}
+                            onClick={() => openUserDetailModal(user)}
                             title="Görüntüle"
                           >
                             <i className="bi bi-eye"></i>
@@ -366,6 +383,18 @@ const Users: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* UserDetail Modal */}
+      <UserDetailModal
+        show={userDetailModal.show}
+        user={userDetailModal.user}
+        onClose={closeUserDetailModal}
+        onEdit={(userId) => {
+          closeUserDetailModal();
+          // TODO: EditUser modal'ını aç veya sayfasına yönlendir
+          console.log('Edit user:', userId);
+        }}
+      />
 
       {/* Delete Modal */}
       {deleteModal.show && deleteModal.user && (
