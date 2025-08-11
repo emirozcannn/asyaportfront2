@@ -5,5 +5,17 @@ export async function deleteAsset(id: string) {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Varlık silinemedi');
-  return await response.json();
+  
+  // DELETE işlemi genelde boş response döner (204 No Content)
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return { success: true, message: 'Asset başarıyla silindi' };
+  }
+  
+  // Eğer content varsa JSON olarak parse et
+  const text = await response.text();
+  if (text) {
+    return JSON.parse(text);
+  }
+  
+  return { success: true, message: 'Asset başarıyla silindi' };
 }

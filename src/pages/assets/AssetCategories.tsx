@@ -1,7 +1,7 @@
 // src/pages/assets/AssetCategories.tsx
 import React, { useState, useEffect } from 'react';
 import type { AssetCategory } from '../../api/types/assets';
-import { categoriesApi } from '../../api/assets/categories';
+import { categoriesApi } from '../../api/categories/categories';
 
 interface CategoryFilters {
   search?: string;

@@ -1,4 +1,4 @@
-// Asset temel tipi
+// Asset temel tipi - Güncellenmiş
 export interface Asset {
   id: string;
   assetNumber: string;
@@ -8,40 +8,115 @@ export interface Asset {
   category?: {
     id: string;
     name: string;
+    code: string;
     color?: string;
     icon?: string;
   };
-  currentUser?: {
+  departmentId?: string;
+  department?: {
     id: string;
-    fullName: string;
-    email: string;
-    department?: string;
+    name: string;
+    code: string;
+  };
+  currentAssignment?: {
+    id: string;
+    assignedToId: string;
+    assignedUser?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      fullName: string;
+      email: string;
+      employeeNumber: string;
+      department?: string;
+    };
+    assignmentDate: string;
+    status: string;
   };
   status: string;
+  qrCode: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+  // İsteğe bağlı ek alanlar
   location?: string;
   purchaseDate?: string;
   purchasePrice?: number;
   warranty?: string;
   brand?: string;
   model?: string;
-  qrCode?: string;
-  qrCodeUrl?: string;
   notes?: string;
   value?: number;
   depreciation?: number;
   warrantyExpiry?: string;
-  createdBy?: string;
+}
+
+// Asset detayları için genişletilmiş tip
+export interface AssetDetails extends Asset {
+  assignmentHistory?: AssetAssignment[];
+  transferHistory?: AssetTransfer[];
+  maintenanceHistory?: any[]; // İleride maintenance özelliği eklenirse
+}
+
+// API'den dönen extended asset response
+export interface AssetResponse {
+  id: string;
+  assetNumber: string;
+  name: string;
+  serialNumber: string;
+  categoryId: string;
+  categoryName?: string;
+  categoryCode?: string;
+  departmentId?: string;
+  departmentName?: string;
+  departmentCode?: string;
+  assignedToId?: string;
+  assignedToName?: string;
+  assignedToEmail?: string;
+  assignedToEmployeeNumber?: string;
+  assignmentDate?: string;
+  assignmentStatus?: string;
+  status: string;
+  qrCode: string;
+  createdBy: string;
   createdAt: string;
   updatedAt?: string;
 }
 
-// Asset DTO (Data Transfer Object) - API'ye gönderilecek veriler için
+// User tipi (dropdown için)
+export interface User {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  departmentId: string;
+  department?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  role: string;
+  isActive: boolean;
+}
+
+// Department tipi
+export interface Department {
+  id: string;
+  name: string;
+  code: string;
+  createdAt: string;
+}
+
+// Asset DTO - güncellenmiş
 export interface AssetDto {
   id?: string;
   assetNumber: string;
   name: string;
   serialNumber: string;
   categoryId: string;
+  departmentId?: string;
   status: string;
   qrCode?: string;
   notes?: string;
@@ -50,141 +125,13 @@ export interface AssetDto {
   updatedAt?: string;
 }
 
-// Asset Kategori tipi
-export interface AssetCategory {
-  id: string;
+// Asset update DTO
+export interface AssetUpdateDto {
   name: string;
-  code: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  isActive?: boolean;
-  assetCount?: number;
-  parentId?: string;
-  created_at: string;
-  updated_at?: string;
-  // Backward compatibility fields
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Asset Kategori DTO
-export interface AssetCategoryDto {
-  id?: string;
-  name: string;
-  code: string;
-  description?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Asset Atama tipi
-export interface AssetAssignment {
-  id: string;
-  assignmentNumber: string;
-  assetId: string;
-  assignedToId: string;
-  assignedById: string;
-  assignmentDate: string;
-  returnDate?: string;
-  status: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Asset Atama DTO
-export interface AssetAssignmentDto {
-  id?: string;
-  asset_id: string;
-  assigned_to_id: string;
-  assigned_by: string;
-  assignment_date: string;
-  return_date?: string;
-  status: string;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Asset Durum tipi
-export interface AssetStatus {
-  id: string;
-  name: string;
-  status: string;
-  updatedAt?: string;
-}
-
-// Asset Transfer tipi
-export interface AssetTransfer {
-  assetId: string;
-  fromUserId: string;
-  toUserId: string;
-  transferDate: string;
-  notes?: string;
-}
-
-// Asset durumları enum
-export const AssetStatusEnum = {
-  AVAILABLE: 'Available',
-  ASSIGNED: 'Assigned',
-  MAINTENANCE: 'Maintenance',
-  RETIRED: 'Retired',
-  LOST: 'Lost',
-  DAMAGED: 'Damaged'
-} as const;
-
-export type AssetStatusEnum = typeof AssetStatusEnum[keyof typeof AssetStatusEnum];
-
-// Atama durumları enum
-export const AssignmentStatusEnum = {
-  ACTIVE: 'Active',
-  RETURNED: 'Returned',
-  OVERDUE: 'Overdue',
-  LOST: 'Lost'
-} as const;
-
-export type AssignmentStatusEnum = typeof AssignmentStatusEnum[keyof typeof AssignmentStatusEnum];
-
-// Asset listesi için filtreleme
-export interface AssetFilter {
-  categoryId?: string;
-  status?: string;
-  searchTerm?: string;
-  assignedToId?: string;
-}
-
-// Asset istatistikleri
-export interface AssetStats {
-  totalAssets: number;
-  availableAssets: number;
-  assignedAssets: number;
-  maintenanceAssets: number;
-  retiredAssets: number;
-  assetsByCategory: { [key: string]: number };
-}
-
-// Bulk operations için
-export interface BulkOperationResult {
-  success: boolean;
-  processedCount: number;
-  errorCount: number;
-  errors: string[];
-}
-
-// QR kod generator için
-export interface QRCodeData {
-  assetId: string;
-  assetNumber: string;
-  name: string;
-}
-
-// Stock durumu
-export interface StockStatus {
+  serialNumber: string;
   categoryId: string;
-  categoryName: string;
-  totalCount: number;
-  availableCount: number;
-  assignedCount: number;
-  maintenanceCount: number;
+  departmentId?: string;
+  status: string;
+  notes?: string;
+  updatedAt: string;
 }
