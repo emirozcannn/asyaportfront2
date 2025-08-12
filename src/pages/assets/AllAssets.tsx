@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Asset } from '../../types/Asset';
+import { useNavigate } from 'react-router-dom';
 
 // API imports - düzeltilmiş yapı
 import { 
@@ -28,6 +29,7 @@ interface Department {
 }
 
 const AllAssets: React.FC = () => {
+ const navigate = useNavigate(); // ← BU SATIR EKLENDİ
  // State management
  const [assets, setAssets] = useState<Asset[]>([]);
  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
@@ -229,16 +231,21 @@ const AllAssets: React.FC = () => {
    }
  };
 
- const handleQRCode = async (asset: Asset) => {
-   try {
-     await qrGeneratorApi.generateQR(asset.id, asset.assetNumber, asset.name);
-     showAlert('QR kod başarıyla oluşturuldu!', 'success');
-   } catch (error) {
-     console.error('QR kod oluşturma hatası:', error);
-     showAlert('QR kod oluşturulamadı!', 'danger');
-   }
- };
-
+const handleQRCode = async (asset: Asset) => {
+  try {
+    // QRGenerator sayfasına yönlendirme - URL'yi düzeltin
+    navigate(`/dashboard/assets/qr-generator/${asset.id}`, {
+      state: {
+        assetId: asset.id,
+        assetNumber: asset.assetNumber,
+        name: asset.name
+      }
+    });
+  } catch (error) {
+    console.error('QR sayfasına yönlendirme hatası:', error);
+    showAlert('Sayfa yönlendirmesi başarısız!', 'danger');
+  }
+};
  // CSV Export helper fonksiyonları
  const generateCSV = (data: Asset[]) => {
    const headers = ['Asset Number', 'Name', 'Serial Number', 'Status', 'Category', 'Created At'];
@@ -870,16 +877,17 @@ const AllAssets: React.FC = () => {
           </div>
         </div>
 
-        {/* Asset Details Modal */}
-        {showDetailsModal && selectedAssetId && (
-          <AssetDetailsModal
-            assetId={selectedAssetId}
-            onClose={() => {
-              setShowDetailsModal(false);
-              setSelectedAssetId(null);
-            }}
-          />
-        )}
+    {/* Asset Details Modal */}
+{showDetailsModal && selectedAssetId && (
+  <AssetDetailsModal
+    assetId={selectedAssetId}
+    assets={assets} // ← BU SATIRI EKLEYİN
+    onClose={() => {
+      setShowDetailsModal(false);
+      setSelectedAssetId(null);
+    }}
+  />
+)}
 
         {/* Edit Asset Modal */}
      
@@ -1058,23 +1066,24 @@ const AllAssets: React.FC = () => {
   );
 };
 
-// Asset Details Modal Component
+// Asset Details Modal Component - Düzeltilmiş versiyon
 interface AssetDetailsModalProps {
   assetId: string;
+  assets?: Asset[]; // Props'a assets ekleyin
   onClose: () => void;
 }
 
-const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, onClose }) => {
+const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, assets, onClose }) => {
   const [assetDetails, setAssetDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper functions
+   // Helper functions
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Available': return 'bg-success';
       case 'Assigned': return 'bg-primary';
       case 'Maintenance': return 'bg-warning';
-      // case 'Damaged': return 'bg-danger';
+      case 'Damaged': return 'bg-danger';
       default: return 'bg-secondary';
     }
   };
@@ -1084,7 +1093,7 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, onClose 
       case 'Available': return 'Müsait';
       case 'Assigned': return 'Atanmış';
       case 'Maintenance': return 'Bakımda';
-      // case 'Damaged': return 'Hasarlı';
+      case 'Damaged': return 'Hasarlı';
       default: return status;
     }
   };
@@ -1100,19 +1109,35 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, onClose 
   useEffect(() => {
     const loadAssetDetails = async () => {
       try {
-        // Önce liste'den asset'ı bulmaya çalış  
-        setAssetDetails(null); // Temizle
-        setLoading(false);
+        // Önce assets props'undan asset'ı bulmaya çalış
+        if (assets && Array.isArray(assets)) {
+          const existingAsset = assets.find((a: Asset) => a.id === assetId);
+          if (existingAsset) {
+            setAssetDetails(existingAsset);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // Eğer props'ta yoksa API'den çek
+        if (assetId) {
+          const asset = await assetsApi.getById(assetId);
+          setAssetDetails(asset);
+        }
       } catch (error) {
         console.error('Asset detayları yüklenirken hata:', error);
+        setAssetDetails(null);
+      } finally {
         setLoading(false);
       }
     };
 
-    loadAssetDetails();
-  }, [assetId]);
+    if (assetId) {
+      loadAssetDetails();
+    }
+  }, [assetId, assets]);
 
-  if (loading) {
+ if (loading) {
     return (
       <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
         <div className="modal-dialog modal-dialog-centered modal-lg">
@@ -1161,7 +1186,7 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, onClose 
                   <p className="form-control-plaintext">{assetDetails.categoryName || 'Belirtilmemiş'}</p>
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold text-muted">Durum</label>
+                  <label className="form-label fw-semibold text-muted">Durum</label><br/>
                   <span className={`badge ${getStatusColor(assetDetails.status)} px-3 py-2`}>
                     {getStatusText(assetDetails.status)}
                   </span>
@@ -1212,7 +1237,6 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, onClose 
     </div>
   );
 };
-
 interface EditAssetModalProps {
   assetId: string;
   assets?: Asset[]; // ← BU SATIRI EKLEYİN
@@ -1254,7 +1278,7 @@ useEffect(() => {
   const loadAssetData = async () => {
     try {
       // assets prop'undan kontrol et
-      if (assets && Array.isArray(assets)) {
+    if (assets && Array.isArray(assets)) {
         const existingAsset = assets.find((a: Asset) => a.id === assetId);
         if (existingAsset) {
           setFormData({
@@ -1271,6 +1295,7 @@ useEffect(() => {
             location: (existingAsset as any).location || '',
             notes: (existingAsset as any).notes || '',
             status: existingAsset.status || 'Available'
+            
           });
           setLoadingData(false);
           return;

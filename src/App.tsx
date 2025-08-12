@@ -126,16 +126,17 @@ function App() {
           <Route path="/dashboard/users/status" element={<Layout><UserStatus /></Layout>} />
           
           
-          {/* Asset Management Routes */}
-          <Route path="/dashboard/assets" element={<Layout><AllAssets /></Layout>} />
-          <Route path="/dashboard/assets/all" element={<Layout><AllAssets /></Layout>} />
-          <Route path="/dashboard/assets/categories" element={<Layout><AssetCategories /></Layout>} />
-          <Route path="/dashboard/assets/add" element={<Layout><AddAsset /></Layout>} />
-          <Route path="/dashboard/assets/transfer" element={<Layout><AssetTransfer /></Layout>} />
-          <Route path="/dashboard/assets/stock-status" element={<Layout><StockStatus /></Layout>} />
-          <Route path="/dashboard/assets/status" element={<Layout><AssetStatus /></Layout>} />
-        
-          <Route path="/dashboard/assets/qr-generator" element={<Layout><QRGenerator /></Layout>} />
+         {/* Asset Management Routes */}
+<Route path="/dashboard/assets" element={<Layout><AllAssets /></Layout>} />
+<Route path="/dashboard/assets/all" element={<Layout><AllAssets /></Layout>} />
+<Route path="/dashboard/assets/categories" element={<Layout><AssetCategories /></Layout>} />
+<Route path="/dashboard/assets/add" element={<Layout><AddAsset /></Layout>} />
+<Route path="/dashboard/assets/transfer" element={<Layout><AssetTransfer /></Layout>} />
+<Route path="/dashboard/assets/stock-status" element={<Layout><StockStatus /></Layout>} />
+<Route path="/dashboard/assets/status" element={<Layout><AssetStatus /></Layout>} />
+
+<Route path="/dashboard/assets/qr-generator" element={<Layout><QRGenerator /></Layout>} />
+<Route path="/dashboard/assets/qr-generator/:id" element={<Layout><QRGenerator /></Layout>} />
           
           {/* Department Management Routes */}
           <Route path="/dashboard/departments" element={<Layout><Departments /></Layout>} />
