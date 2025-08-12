@@ -11,7 +11,7 @@ import {
 
 import { categoriesApi } from '../../api/categories';
 import { departmentsApi } from '../../api/departments';
-import { getAllUsers } from '../../api/users';
+import { getAllUsers } from '../../api/users/getAllUsers';
 import { getAssetStats } from '../../api/assetHelpers';
 // import { bulkOperationsApi } from '../../api/bulkOperations'; // Dosya mevcut değil, import kaldırıldı
 // import { exportImportApi } from '../../api/exportImport'; // Dosya mevcut değil, import kaldırıldı

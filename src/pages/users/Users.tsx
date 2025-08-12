@@ -1,7 +1,9 @@
 // src/pages/users/Users.tsx - UserDetailModal entegreli versiyon
 import React, { useState, useEffect } from 'react';
-import { deleteUser } from '../../api/users';
+
+import { deleteUser } from '../../api/users/deleteUser';
 import { getAllUsers } from '../../api/users/getAllUsers';
+
 import UserDetailModal from './UserDetailModal';
 
 // API'den gelen User type (API response'a uygun)

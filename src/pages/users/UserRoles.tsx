@@ -1,6 +1,6 @@
 // src/pages/users/UserRoles.tsx - Düzeltilmiş versiyon
 import React, { useState, useEffect } from 'react';
-import { getAllUsers } from '../../api/users';
+import { getAllUsers } from '../../api/users/getAllUsers';
 
 // Local types
 interface User {

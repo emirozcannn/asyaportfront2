@@ -1,6 +1,6 @@
 // src/pages/users/UserStatus.tsx
 import React, { useState, useEffect } from 'react';
-import { getAllUsers } from '../../api/users';
+import { getAllUsers } from '../../api/users/getAllUsers';
 
 interface User {
   id: string;

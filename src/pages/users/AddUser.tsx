@@ -1,7 +1,7 @@
 // src/pages/users/AddUser.tsx - Database schema'ya uygun versiyon
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUser } from '../../api/users';
+import { createUser } from '../../api/users/createUser';
 import { getAllDepartments } from '../../api/departments/getAllDepartments';
 import type { Department } from '../../api/types/department';
 
