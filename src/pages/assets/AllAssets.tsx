@@ -1,324 +1,365 @@
 import React, { useState, useEffect } from 'react';
 import type { Asset } from '../../types/Asset';
 
-// API imports - yeni düzenlenmiş API yapısı
+// API imports - düzeltilmiş yapı
 import { 
-  getAllAssets, 
-  createAsset,
-  updateAsset,
-  qrGeneratorApi
+ getAllAssets, 
+ createAsset,
+ updateAsset,
+ qrGeneratorApi,
+ assetsApi
 } from '../../api/assets/index';
 
 import { categoriesApi } from '../../api/categories';
 import { departmentsApi } from '../../api/departments';
 import { getAllUsers } from '../../api/users/getAllUsers';
 import { getAssetStats } from '../../api/assetHelpers';
-// import { bulkOperationsApi } from '../../api/bulkOperations'; // Dosya mevcut değil, import kaldırıldı
-// import { exportImportApi } from '../../api/exportImport'; // Dosya mevcut değil, import kaldırıldı
-import { assetsApi } from '../assets/index';
 
 interface Category {
-  id: string;
-  name: string;
-  code: string;
+ id: string;
+ name: string;
+ code: string;
 }
 
 interface Department {
-  id: string;
-  name: string;
-  code: string;
+ id: string;
+ name: string;
+ code: string;
 }
 
 const AllAssets: React.FC = () => {
-  // State management
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'assetNumber' | 'status' | 'createdAt'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  
-  // Modal states
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  
-  // Data for dropdowns
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
+ // State management
+ const [assets, setAssets] = useState<Asset[]>([]);
+ const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+ const [loading, setLoading] = useState(true);
+ const [searchTerm, setSearchTerm] = useState('');
+ const [statusFilter, setStatusFilter] = useState('all');
+ const [categoryFilter, setCategoryFilter] = useState('all');
+ const [departmentFilter, setDepartmentFilter] = useState('all');
+ const [sortBy, setSortBy] = useState<'name' | 'assetNumber' | 'status' | 'createdAt'>('name');
+ const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+ 
+ // Modal states
+ const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+ const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+ const [showDetailsModal, setShowDetailsModal] = useState(false);
+ const [showEditModal, setShowEditModal] = useState(false);
+ const [showAddModal, setShowAddModal] = useState(false);
+ const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+ const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+ 
+ // Data for dropdowns
+ const [categories, setCategories] = useState<Category[]>([]);
+ const [departments, setDepartments] = useState<Department[]>([]);
+ const [users, setUsers] = useState<any[]>([]);
+ const [stats, setStats] = useState<any>(null);
 
-  useEffect(() => {
-    loadAllData();
-  }, []);
+ useEffect(() => {
+   loadAllData();
+ }, []);
 
-  useEffect(() => {
-    filterAssets();
-  }, [assets, searchTerm, statusFilter, categoryFilter, departmentFilter, sortBy, sortOrder]);
+ useEffect(() => {
+   filterAssets();
+ }, [assets, searchTerm, statusFilter, categoryFilter, departmentFilter, sortBy, sortOrder]);
 
-  const loadAllData = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([
-        loadAssets(),
-        loadCategories(),
-        loadDepartments(),
-        loadUsers(),
-        loadStats()
-      ]);
-    } catch (error) {
-      console.error('Veriler yüklenirken hata:', error);
-      showAlert('Veriler yüklenirken hata oluştu!', 'danger');
-    } finally {
-      setLoading(false);
-    }
-  };
+ const loadAllData = async () => {
+   setLoading(true);
+   try {
+     await Promise.all([
+       loadAssets(),
+       loadCategories(),
+       loadDepartments(),
+       loadUsers(),
+       loadStats()
+     ]);
+   } catch (error) {
+     console.error('Veriler yüklenirken hata:', error);
+     showAlert('Veriler yüklenirken hata oluştu!', 'danger');
+   } finally {
+     setLoading(false);
+   }
+ };
 
-  const loadAssets = async () => {
-    try {
-      const data = await getAllAssets();
-      // Assets'ları status türüne göre dönüştür
-      const typedAssets: Asset[] = data.map(asset => ({
-        ...asset,
-        status: asset.status as 'Available' | 'Assigned'
-      }));
-      setAssets(typedAssets);
-    } catch (error) {
-      console.error('Assets yüklenirken hata:', error);
-      showAlert('Assets yüklenemedi!', 'danger');
-    }
-  };
+ const loadAssets = async () => {
+   try {
+     const data = await getAllAssets();
+     // Assets'ları status türüne göre dönüştür
+     const typedAssets: Asset[] = data.map(asset => ({
+       ...asset,
+       status: asset.status as 'Available' | 'Assigned'
+     }));
+     setAssets(typedAssets);
+   } catch (error) {
+     console.error('Assets yüklenirken hata:', error);
+     showAlert('Assets yüklenemedi!', 'danger');
+   }
+ };
 
-  const loadCategories = async () => {
-    try {
-      const data = await categoriesApi.getAll();
-      setCategories(data);
-    } catch (error) {
-      console.error('Kategoriler yüklenirken hata:', error);
-    }
-  };
+ const loadCategories = async () => {
+   try {
+     const data = await categoriesApi.getAll();
+     setCategories(data);
+   } catch (error) {
+     console.error('Kategoriler yüklenirken hata:', error);
+   }
+ };
 
-  const loadDepartments = async () => {
-    try {
-      const data = await departmentsApi.getAll();
-      setDepartments(data);
-    } catch (error) {
-      console.error('Departmanlar yüklenirken hata:', error);
-    }
-  };
+ const loadDepartments = async () => {
+   try {
+     const data = await departmentsApi.getAll();
+     setDepartments(data);
+   } catch (error) {
+     console.error('Departmanlar yüklenirken hata:', error);
+   }
+ };
 
-  const loadUsers = async () => {
-    try {
-      const data = await getAllUsers();
-      setUsers(data);
-    } catch (error) {
-      console.error('Kullanıcılar yüklenirken hata:', error);
-    }
-  };
+ const loadUsers = async () => {
+   try {
+     const data = await getAllUsers();
+     setUsers(data);
+   } catch (error) {
+     console.error('Kullanıcılar yüklenirken hata:', error);
+   }
+ };
 
-  const loadStats = async () => {
-    try {
-      const data = await getAssetStats();
-      setStats(data);
-    } catch (error) {
-      console.error('İstatistikler yüklenirken hata:', error);
-    }
-  };
+ const loadStats = async () => {
+   try {
+     const data = await getAssetStats();
+     setStats(data);
+   } catch (error) {
+     console.error('İstatistikler yüklenirken hata:', error);
+   }
+ };
 
-  const filterAssets = () => {
-    let filtered = assets;
+ const filterAssets = () => {
+   let filtered = assets;
 
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(asset =>
-        asset.name.toLowerCase().includes(term) ||
-        asset.assetNumber.toLowerCase().includes(term) ||
-        asset.serialNumber.toLowerCase().includes(term) ||
-        (asset.assignedToName && asset.assignedToName.toLowerCase().includes(term))
-      );
-    }
+   if (searchTerm.trim()) {
+     const term = searchTerm.toLowerCase();
+     filtered = filtered.filter(asset =>
+       asset.name.toLowerCase().includes(term) ||
+       asset.assetNumber.toLowerCase().includes(term) ||
+       asset.serialNumber.toLowerCase().includes(term) ||
+       (asset.assignedToName && asset.assignedToName.toLowerCase().includes(term))
+     );
+   }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(asset => asset.status === statusFilter);
-    }
+   if (statusFilter !== 'all') {
+     filtered = filtered.filter(asset => asset.status === statusFilter);
+   }
 
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(asset => asset.categoryId === categoryFilter);
-    }
+   if (categoryFilter !== 'all') {
+     filtered = filtered.filter(asset => asset.categoryId === categoryFilter);
+   }
 
-    if (departmentFilter !== 'all') {
-      filtered = filtered.filter(asset => asset.departmentId === departmentFilter);
-    }
+   if (departmentFilter !== 'all') {
+     filtered = filtered.filter(asset => asset.departmentId === departmentFilter);
+   }
 
-    // Sorting
-    filtered.sort((a, b) => {
-      let aValue: any = a[sortBy];
-      let bValue: any = b[sortBy];
-      
-      if (sortBy === 'createdAt') {
-        aValue = new Date(aValue).getTime();
-        bValue = new Date(bValue).getTime();
-      } else {
-        aValue = aValue?.toString().toLowerCase() || '';
-        bValue = bValue?.toString().toLowerCase() || '';
-      }
-      
-      const multiplier = sortOrder === 'asc' ? 1 : -1;
-      return aValue > bValue ? multiplier : aValue < bValue ? -multiplier : 0;
-    });
+   // Sorting
+   filtered.sort((a, b) => {
+     let aValue: any = a[sortBy];
+     let bValue: any = b[sortBy];
+     
+     if (sortBy === 'createdAt') {
+       aValue = new Date(aValue).getTime();
+       bValue = new Date(bValue).getTime();
+     } else {
+       aValue = aValue?.toString().toLowerCase() || '';
+       bValue = bValue?.toString().toLowerCase() || '';
+     }
+     
+     const multiplier = sortOrder === 'asc' ? 1 : -1;
+     return aValue > bValue ? multiplier : aValue < bValue ? -multiplier : 0;
+   });
 
-    setFilteredAssets(filtered);
-  };
+   setFilteredAssets(filtered);
+ };
 
-  const handleSort = (field: 'name' | 'assetNumber' | 'status' | 'createdAt') => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-    }
-  };
+ const handleSort = (field: 'name' | 'assetNumber' | 'status' | 'createdAt') => {
+   if (sortBy === field) {
+     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+   } else {
+     setSortBy(field);
+     setSortOrder('asc');
+   }
+ };
 
-  const handleViewDetails = (assetId: string) => {
-    setSelectedAssetId(assetId);
-    setShowDetailsModal(true);
-  };
+ const handleViewDetails = (assetId: string) => {
+   setSelectedAssetId(assetId);
+   setShowDetailsModal(true);
+ };
 
-  const handleEdit = (assetId: string) => {
-    setSelectedAssetId(assetId);
-    setShowEditModal(true);
-  };
+ const handleEdit = (assetId: string) => {
+   setSelectedAssetId(assetId);
+   setShowEditModal(true);
+ };
 
-  const handleDelete = async () => {
-    if (!selectedAssetId) return;
-    
-    try {
-      await assetsApi.delete(selectedAssetId);
-      await loadAssets(); // Listeyi yenile
-      setShowDeleteConfirm(false);
-      setSelectedAssetId(null);
-      showAlert('Asset başarıyla silindi!', 'success');
-    } catch (error) {
-      console.error('Asset silinirken hata:', error);
-      showAlert('Asset silinirken hata oluştu!', 'danger');
-    }
-  };
+ const handleDelete = async () => {
+   if (!selectedAssetId) return;
+   
+   try {
+     await assetsApi.delete(selectedAssetId);
+     await loadAssets(); // Listeyi yenile
+     setShowDeleteConfirm(false);
+     setSelectedAssetId(null);
+     showAlert('Asset başarıyla silindi!', 'success');
+   } catch (error) {
+     console.error('Asset silinirken hata:', error);
+     showAlert('Asset silinirken hata oluştu!', 'danger');
+   }
+ };
 
-  const handleBulkDelete = async () => {
-    if (selectedAssets.length === 0) return;
-    
-    try {
-      const result = await bulkOperationsApi.deleteMultiple(selectedAssets);
-      await loadAssets(); // Listeyi yenile
-      setShowBulkDeleteConfirm(false);
-      setSelectedAssets([]);
-      
-      const successCount = result.filter(r => r.success).length;
-      const errorCount = result.filter(r => !r.success).length;
-      
-      if (errorCount === 0) {
-        showAlert(`${successCount} asset başarıyla silindi!`, 'success');
-      } else {
-        showAlert(`${successCount} asset silindi, ${errorCount} hata oluştu!`, 'info');
-      }
-    } catch (error) {
-      console.error('Toplu silme hatası:', error);
-      showAlert('Toplu silme işlemi başarısız!', 'danger');
-    }
-  };
+ const handleBulkDelete = async () => {
+   if (selectedAssets.length === 0) return;
+   
+   try {
+     // Tek tek silme işlemi (bulkOperationsApi olmadığı için)
+     const deletePromises = selectedAssets.map(id => assetsApi.delete(id));
+     await Promise.all(deletePromises);
+     
+     await loadAssets(); // Listeyi yenile
+     setShowBulkDeleteConfirm(false);
+     setSelectedAssets([]);
+     
+     showAlert(`${selectedAssets.length} asset başarıyla silindi!`, 'success');
+   } catch (error) {
+     console.error('Toplu silme hatası:', error);
+     showAlert('Toplu silme işlemi başarısız!', 'danger');
+   }
+ };
 
-  const handleQRCode = async (asset: Asset) => {
-    try {
-      await qrGeneratorApi.generateQR(asset.id, asset.assetNumber, asset.name);
-      showAlert('QR kod başarıyla oluşturuldu!', 'success');
-    } catch (error) {
-      console.error('QR kod oluşturma hatası:', error);
-      showAlert('QR kod oluşturulamadı!', 'danger');
-    }
-  };
+ const handleQRCode = async (asset: Asset) => {
+   try {
+     await qrGeneratorApi.generateQR(asset.id, asset.assetNumber, asset.name);
+     showAlert('QR kod başarıyla oluşturuldu!', 'success');
+   } catch (error) {
+     console.error('QR kod oluşturma hatası:', error);
+     showAlert('QR kod oluşturulamadı!', 'danger');
+   }
+ };
 
-  const handleExport = async () => {
-    try {
-      await exportImportApi.exportToCSV(selectedAssets.length > 0 ? selectedAssets : undefined);
-      showAlert('Assets başarıyla dışa aktarıldı!', 'success');
-    } catch (error) {
-      console.error('Export hatası:', error);
-      showAlert('Export işlemi başarısız!', 'danger');
-    }
-  };
+ // CSV Export helper fonksiyonları
+ const generateCSV = (data: Asset[]) => {
+   const headers = ['Asset Number', 'Name', 'Serial Number', 'Status', 'Category', 'Created At'];
+   const rows = data.map(asset => [
+     asset.assetNumber,
+     asset.name,
+     asset.serialNumber,
+     asset.status,
+     categories.find(c => c.id === asset.categoryId)?.name || '',
+     formatDate(asset.createdAt)
+   ]);
+   
+   return [headers, ...rows].map(row => row.join(',')).join('\n');
+ };
 
-  const handleSelectAsset = (assetId: string) => {
-    setSelectedAssets(prev => 
-      prev.includes(assetId) 
-        ? prev.filter(id => id !== assetId)
-        : [...prev, assetId]
-    );
-  };
+ const downloadCSV = (content: string, filename: string) => {
+   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+   const link = document.createElement('a');
+   const url = URL.createObjectURL(blob);
+   link.setAttribute('href', url);
+   link.setAttribute('download', filename);
+   link.style.visibility = 'hidden';
+   document.body.appendChild(link);
+   link.click();
+   document.body.removeChild(link);
+ };
 
-  const handleSelectAll = () => {
-    if (selectedAssets.length === filteredAssets.length) {
-      setSelectedAssets([]);
-    } else {
-      setSelectedAssets(filteredAssets.map(asset => asset.id));
-    }
-  };
+ const handleExport = async () => {
+   try {
+     // Manual CSV export (exportImportApi olmadığı için)
+     const dataToExport = selectedAssets.length > 0 
+       ? filteredAssets.filter(asset => selectedAssets.includes(asset.id))
+       : filteredAssets;
+     
+     const csvContent = generateCSV(dataToExport);
+     downloadCSV(csvContent, 'assets-export.csv');
+     
+     showAlert('Assets başarıyla dışa aktarıldı!', 'success');
+   } catch (error) {
+     console.error('Export hatası:', error);
+     showAlert('Export işlemi başarısız!', 'danger');
+   }
+ };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Available': return 'bg-success';
-      case 'Assigned': return 'bg-primary';
-      case 'Maintenance': return 'bg-warning';
-      // case 'Damaged': return 'bg-danger';
-      default: return 'bg-secondary';
-    }
-  };
+ const handleSelectAsset = (assetId: string) => {
+   setSelectedAssets(prev => 
+     prev.includes(assetId) 
+       ? prev.filter(id => id !== assetId)
+       : [...prev, assetId]
+   );
+ };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'Available': return 'Müsait';
-      case 'Assigned': return 'Atanmış';
-      case 'Maintenance': return 'Bakımda';
-      // case 'Damaged': return 'Hasarlı';
-      default: return status;
-    }
-  };
+ const handleSelectAll = () => {
+   if (selectedAssets.length === filteredAssets.length) {
+     setSelectedAssets([]);
+   } else {
+     setSelectedAssets(filteredAssets.map(asset => asset.id));
+   }
+ };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
+ const getStatusColor = (status: string) => {
+   switch (status) {
+     case 'Available': return 'bg-success';
+     case 'Assigned': return 'bg-primary';
+     case 'Maintenance': return 'bg-warning';
+     case 'Damaged': return 'bg-danger';
+     default: return 'bg-secondary';
+   }
+ };
 
-  const showAlert = (message: string, type: 'success' | 'danger' | 'info' = 'info') => {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed shadow-lg border-0`;
-    alertDiv.style.top = '20px';
-    alertDiv.style.right = '20px';
-    alertDiv.style.zIndex = '9999';
-    alertDiv.style.borderRadius = '12px';
-    alertDiv.innerHTML = `
-      <div class="d-flex align-items-center">
-        <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
-        <span>${message}</span>
-      </div>
-      <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-    `;
-    document.body.appendChild(alertDiv);
-    setTimeout(() => {
-      if (alertDiv.parentNode) alertDiv.remove();
-    }, 4000);
-  };
+ const getStatusText = (status: string) => {
+   switch (status) {
+     case 'Available': return 'Müsait';
+     case 'Assigned': return 'Atanmış';
+     case 'Maintenance': return 'Bakımda';
+     case 'Damaged': return 'Hasarlı';
+     default: return status;
+   }
+ };
 
+ const formatDate = (dateString: string) => {
+   return new Date(dateString).toLocaleDateString('tr-TR', {
+     day: '2-digit',
+     month: '2-digit',
+     year: 'numeric'
+   });
+ };
+
+ const showAlert = (message: string, type: 'success' | 'danger' | 'info' = 'info') => {
+   const alertDiv = document.createElement('div');
+   alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed shadow-lg border-0`;
+   alertDiv.style.top = '20px';
+   alertDiv.style.right = '20px';
+   alertDiv.style.zIndex = '9999';
+   alertDiv.style.borderRadius = '12px';
+   alertDiv.innerHTML = `
+     <div class="d-flex align-items-center">
+       <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
+       <span>${message}</span>
+     </div>
+     <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+   `;
+   document.body.appendChild(alertDiv);
+   setTimeout(() => {
+     if (alertDiv.parentNode) alertDiv.remove();
+   }, 4000);
+ };
+
+ if (loading) {
+   return (
+     <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+       <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
+         <div className="card border-0 shadow-sm p-5 text-center" style={{ borderRadius: '8px', backgroundColor: '#ffffff' }}>
+           <div className="spinner-border text-primary mb-4" style={{ width: '4rem', height: '4rem' }}></div>
+           <h4 className="text-dark fw-bold mb-2">Assets Yükleniyor...</h4>
+           <p className="text-muted">Lütfen bekleyiniz</p>
+         </div>
+       </div>
+     </div>
+   );
+ }
   if (loading) {
     return (
       <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
@@ -841,22 +882,24 @@ const AllAssets: React.FC = () => {
         )}
 
         {/* Edit Asset Modal */}
-        {showEditModal && selectedAssetId && (
-          <EditAssetModal
-            assetId={selectedAssetId}
-            onSuccess={async () => {
-              setShowEditModal(false);
-              setSelectedAssetId(null);
-              await loadAssets();
-              showAlert('Asset başarıyla güncellendi!', 'success');
-            }}
-            onCancel={() => {
-              setShowEditModal(false);
-              setSelectedAssetId(null);
-            }}
-            categories={categories}
-          />
-        )}
+     
+{showEditModal && selectedAssetId && (
+  <EditAssetModal
+    assetId={selectedAssetId}
+    assets={assets} // ← BU SATIRI EKLEYİN
+    onSuccess={async () => {
+      setShowEditModal(false);
+      setSelectedAssetId(null);
+      await loadAssets();
+      showAlert('Asset başarıyla güncellendi!', 'success');
+    }}
+    onCancel={() => {
+      setShowEditModal(false);
+      setSelectedAssetId(null);
+    }}
+    categories={categories}
+  />
+)}
 
         {/* Bulk Delete Confirmation Modal */}
         {showBulkDeleteConfirm && selectedAssets.length > 0 && (
@@ -1170,9 +1213,9 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assetId, onClose 
   );
 };
 
-// Edit Asset Modal Component
 interface EditAssetModalProps {
   assetId: string;
+  assets?: Asset[]; // ← BU SATIRI EKLEYİN
   onSuccess: () => void;
   onCancel: () => void;
   categories: Category[];
@@ -1180,6 +1223,7 @@ interface EditAssetModalProps {
 
 const EditAssetModal: React.FC<EditAssetModalProps> = ({
   assetId,
+  assets, // ← BU SATIRI EKLEYİN
   onSuccess,
   onCancel,
   categories
@@ -1205,11 +1249,13 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // Load existing asset data
-  useEffect(() => {
-    const loadAssetData = async () => {
-      try {
-        // Önce ana assets listesinden asset'ı bulmaya çalış
-        const existingAsset = filteredAssets.find((a: Asset) => a.id === assetId);
+// Load existing asset data
+useEffect(() => {
+  const loadAssetData = async () => {
+    try {
+      // assets prop'undan kontrol et
+      if (assets && Array.isArray(assets)) {
+        const existingAsset = assets.find((a: Asset) => a.id === assetId);
         if (existingAsset) {
           setFormData({
             name: existingAsset.name || '',
@@ -1229,8 +1275,10 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({
           setLoadingData(false);
           return;
         }
-        
-        // Eğer liste'de yoksa API'den çekmeye çalış
+      }
+      
+      // Eğer liste'de yoksa API'den çek
+      if (assetId) {
         const asset = await assetsApi.getById(assetId);
         setFormData({
           name: asset.name || '',
@@ -1247,17 +1295,19 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({
           notes: (asset as any).notes || '',
           status: asset.status || 'Available'
         });
-      } catch (error) {
-        console.error('Asset verileri yüklenirken hata:', error);
-        setErrors({ submit: 'Asset verileri yüklenemedi!' });
-      } finally {
-        setLoadingData(false);
       }
-    };
+    } catch (error) {
+      console.error('Asset verileri yüklenirken hata:', error);
+      setErrors({ submit: 'Asset verileri yüklenemedi!' });
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
+  if (assetId) {
     loadAssetData();
-  }, [assetId]);
-
+  }
+}, [assetId, assets]); // assets'ı dependency'ye ekleyin
   // Form validation
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -1283,51 +1333,55 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({
   };
 
   // Form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ 
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!validateForm()) {
-      return;
+  if (!validateForm()) {
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const updateData = {
+      id: assetId, // ← ID'yi ekleyin
+      name: formData.name,
+      serialNumber: formData.serialNumber,
+      assetNumber: formData.assetNumber,
+      categoryId: formData.categoryId,
+      status: formData.status, // Sadece valid status'lar: Available, Assigned, Damaged
+      qrCode: `QR-${formData.assetNumber}`, // ← QR kod ekleyin
+      createdBy: "30549f61-ed08-4867-bce0-b80a64ae7199", // ← Geçici user ID
+      createdAt: new Date().toISOString(), // ← Oluşturma tarihi ekleyin
+      updatedAt: new Date().toISOString()
+    };
+
+    // updateAsset API çağrısı - URL'yi düzeltin
+    const response = await fetch(`https://localhost:7190/api/Assets/${assetId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`Asset güncellenemedi: ${response.status} - ${errorText}`);
     }
 
-    setLoading(true);
-    try {
-      const updateData = {
-        name: formData.name,
-        description: formData.description,
-        serialNumber: formData.serialNumber,
-        assetNumber: formData.assetNumber,
-        categoryId: formData.categoryId,
-        brand: formData.brand,
-        model: formData.model,
-        purchaseDate: formData.purchaseDate || undefined,
-        purchasePrice: formData.purchasePrice || undefined,
-        warranty: formData.warranty || undefined,
-        location: formData.location || undefined,
-        notes: formData.notes || undefined,
-        status: formData.status,
-        updatedAt: new Date().toISOString()
-      };
-
-      // updateAsset API çağrısı
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190'}/api/Assets/${assetId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Asset güncellenemedi');
-      }
-
-      onSuccess();
-    } catch (error) {
-      console.error('Asset güncelleme hatası:', error);
-      setErrors({ submit: 'Asset güncellenirken bir hata oluştu!' });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const result = await response.json();
+    console.log('Update başarılı:', result);
+    onSuccess();
+  } catch (error) {
+    console.error('Asset güncelleme hatası:', error);
+    setErrors({ submit: `Asset güncellenirken bir hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}` });
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loadingData) {
     return (
@@ -1571,29 +1625,34 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
   };
 
   // Form validation
-  const validateForm = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
+  // Form validation
+const validateForm = (): boolean => {
+  const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Asset adı gereklidir';
-    }
+  if (!formData.name.trim()) {
+    newErrors.name = 'Asset adı gereklidir';
+  }
 
-    if (!formData.serialNumber.trim()) {
-      newErrors.serialNumber = 'Seri numarası gereklidir';
-    }
+  if (!formData.serialNumber.trim()) {
+    newErrors.serialNumber = 'Seri numarası gereklidir';
+  }
 
-    if (!formData.assetNumber.trim()) {
-      newErrors.assetNumber = 'Asset numarası gereklidir';
-    }
+  if (!formData.assetNumber.trim()) {
+    newErrors.assetNumber = 'Asset numarası gereklidir';
+  }
 
-    if (!formData.categoryId) {
-      newErrors.categoryId = 'Kategori seçimi gereklidir';
-    }
+  if (!formData.categoryId) {
+    newErrors.categoryId = 'Kategori seçimi gereklidir';
+  }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  // Status validation ekleyin
+  if (!['Available', 'Assigned', 'Damaged'].includes(formData.status)) {
+    newErrors.status = 'Geçersiz durum seçimi';
+  }
 
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
   // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
