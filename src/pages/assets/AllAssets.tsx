@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import type { Asset } from '../../types/Asset';
 import { useNavigate } from 'react-router-dom';
 
-// API imports - düzeltilmiş yapı
+// API imports
 import { 
- getAllAssets, 
- createAsset,
- updateAsset,
- qrGeneratorApi,
- assetsApi
+  getAllAssets, 
+  createAsset,
+  updateAsset,
+  qrGeneratorApi,
+  assetsApi
 } from '../../api/assets/index';
 
 import { categoriesApi } from '../../api/categories';
@@ -17,825 +17,491 @@ import { getAllUsers } from '../../api/users/getAllUsers';
 import { getAssetStats } from '../../api/assetHelpers';
 
 interface Category {
- id: string;
- name: string;
- code: string;
+  id: string;
+  name: string;
+  code: string;
 }
 
 interface Department {
- id: string;
- name: string;
- code: string;
+  id: string;
+  name: string;
+  code: string;
 }
 
 const AllAssets: React.FC = () => {
- const navigate = useNavigate(); // ← BU SATIR EKLENDİ
- // State management
- const [assets, setAssets] = useState<Asset[]>([]);
- const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
- const [loading, setLoading] = useState(true);
- const [searchTerm, setSearchTerm] = useState('');
- const [statusFilter, setStatusFilter] = useState('all');
- const [categoryFilter, setCategoryFilter] = useState('all');
- const [departmentFilter, setDepartmentFilter] = useState('all');
- const [sortBy, setSortBy] = useState<'name' | 'assetNumber' | 'status' | 'createdAt'>('name');
- const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
- 
- // Modal states
- const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
- const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
- const [showDetailsModal, setShowDetailsModal] = useState(false);
- const [showEditModal, setShowEditModal] = useState(false);
- const [showAddModal, setShowAddModal] = useState(false);
- const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
- const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
- 
- // Data for dropdowns
- const [categories, setCategories] = useState<Category[]>([]);
- const [departments, setDepartments] = useState<Department[]>([]);
- const [users, setUsers] = useState<any[]>([]);
- const [stats, setStats] = useState<any>(null);
+  const navigate = useNavigate();
 
- useEffect(() => {
-   loadAllData();
- }, []);
+  // State management
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  
+  // Modal states
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
- useEffect(() => {
-   filterAssets();
- }, [assets, searchTerm, statusFilter, categoryFilter, departmentFilter, sortBy, sortOrder]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
 
- const loadAllData = async () => {
-   setLoading(true);
-   try {
-     await Promise.all([
-       loadAssets(),
-       loadCategories(),
-       loadDepartments(),
-       loadUsers(),
-       loadStats()
-     ]);
-   } catch (error) {
-     console.error('Veriler yüklenirken hata:', error);
-     showAlert('Veriler yüklenirken hata oluştu!', 'danger');
-   } finally {
-     setLoading(false);
-   }
- };
+  useEffect(() => {
+    loadAllData();
+  }, []);
 
- const loadAssets = async () => {
-   try {
-     const data = await getAllAssets();
-     // Assets'ları status türüne göre dönüştür
-     const typedAssets: Asset[] = data.map(asset => ({
-       ...asset,
-       status: asset.status as 'Available' | 'Assigned'
-     }));
-     setAssets(typedAssets);
-   } catch (error) {
-     console.error('Assets yüklenirken hata:', error);
-     showAlert('Assets yüklenemedi!', 'danger');
-   }
- };
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await Promise.all([
+        loadAssets(),
+        loadCategories(),
+        loadDepartments(),
+        loadUsers()
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Veriler yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
+  };
 
- const loadCategories = async () => {
-   try {
-     const data = await categoriesApi.getAll();
-     setCategories(data);
-   } catch (error) {
-     console.error('Kategoriler yüklenirken hata:', error);
-   }
- };
+  const loadAssets = async () => {
+    const data = await getAllAssets();
+    const typedAssets: Asset[] = data.map(asset => ({
+      ...asset,
+      status: asset.status as 'Available' | 'Assigned'
+    }));
+    setAssets(typedAssets);
+  };
 
- const loadDepartments = async () => {
-   try {
-     const data = await departmentsApi.getAll();
-     setDepartments(data);
-   } catch (error) {
-     console.error('Departmanlar yüklenirken hata:', error);
-   }
- };
+  const loadCategories = async () => {
+    const data = await categoriesApi.getAll();
+    setCategories(data);
+  };
 
- const loadUsers = async () => {
-   try {
-     const data = await getAllUsers();
-     setUsers(data);
-   } catch (error) {
-     console.error('Kullanıcılar yüklenirken hata:', error);
-   }
- };
+  const loadDepartments = async () => {
+    const data = await departmentsApi.getAll();
+    setDepartments(data);
+  };
 
- const loadStats = async () => {
-   try {
-     const data = await getAssetStats();
-     setStats(data);
-   } catch (error) {
-     console.error('İstatistikler yüklenirken hata:', error);
-   }
- };
+  const loadUsers = async () => {
+    const data = await getAllUsers();
+    setUsers(data);
+  };
 
- const filterAssets = () => {
-   let filtered = assets;
+  // Client-side filtreleme
+  const filteredAssets = assets.filter(asset => {
+    const matchesSearch = !searchTerm || 
+      asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.assetNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || asset.status === statusFilter;
+    const matchesCategory = !categoryFilter || asset.categoryId === categoryFilter;
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
 
-   if (searchTerm.trim()) {
-     const term = searchTerm.toLowerCase();
-     filtered = filtered.filter(asset =>
-       asset.name.toLowerCase().includes(term) ||
-       asset.assetNumber.toLowerCase().includes(term) ||
-       asset.serialNumber.toLowerCase().includes(term) ||
-       (asset.assignedToName && asset.assignedToName.toLowerCase().includes(term))
-     );
-   }
+  const handleAssetSelect = (assetId: string) => {
+    setSelectedAssets(prev => 
+      prev.includes(assetId) 
+        ? prev.filter(id => id !== assetId)
+        : [...prev, assetId]
+    );
+  };
 
-   if (statusFilter !== 'all') {
-     filtered = filtered.filter(asset => asset.status === statusFilter);
-   }
+  const handleSelectAll = () => {
+    if (selectedAssets.length === filteredAssets.length && filteredAssets.length > 0) {
+      setSelectedAssets([]);
+    } else {
+      setSelectedAssets(filteredAssets.map(asset => asset.id));
+    }
+  };
 
-   if (categoryFilter !== 'all') {
-     filtered = filtered.filter(asset => asset.categoryId === categoryFilter);
-   }
+  const handleViewDetails = (assetId: string) => {
+    setSelectedAssetId(assetId);
+    setShowDetailsModal(true);
+  };
 
-   if (departmentFilter !== 'all') {
-     filtered = filtered.filter(asset => asset.departmentId === departmentFilter);
-   }
+  const handleEdit = (assetId: string) => {
+    setSelectedAssetId(assetId);
+    setShowEditModal(true);
+  };
 
-   // Sorting
-   filtered.sort((a, b) => {
-     let aValue: any = a[sortBy];
-     let bValue: any = b[sortBy];
-     
-     if (sortBy === 'createdAt') {
-       aValue = new Date(aValue).getTime();
-       bValue = new Date(bValue).getTime();
-     } else {
-       aValue = aValue?.toString().toLowerCase() || '';
-       bValue = bValue?.toString().toLowerCase() || '';
-     }
-     
-     const multiplier = sortOrder === 'asc' ? 1 : -1;
-     return aValue > bValue ? multiplier : aValue < bValue ? -multiplier : 0;
-   });
+  const handleQRCode = async (asset: Asset) => {
+    try {
+      navigate(`/dashboard/assets/qr-generator/${asset.id}`, {
+        state: {
+          assetId: asset.id,
+          assetNumber: asset.assetNumber,
+          name: asset.name
+        }
+      });
+    } catch (error) {
+      console.error('QR sayfasına yönlendirme hatası:', error);
+    }
+  };
 
-   setFilteredAssets(filtered);
- };
+  const handleDelete = async () => {
+    if (!selectedAssetId) return;
+    try {
+      await assetsApi.delete(selectedAssetId);
+      await loadAssets();
+      setShowDeleteConfirm(false);
+      setSelectedAssetId(null);
+      showAlert('Asset başarıyla silindi!', 'success');
+    } catch (error) {
+      showAlert('Asset silinemedi!', 'danger');
+    }
+  };
 
- const handleSort = (field: 'name' | 'assetNumber' | 'status' | 'createdAt') => {
-   if (sortBy === field) {
-     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-   } else {
-     setSortBy(field);
-     setSortOrder('asc');
-   }
- };
+  // CSV Export
+  const handleExport = () => {
+    const dataToExport = selectedAssets.length > 0 
+      ? filteredAssets.filter(asset => selectedAssets.includes(asset.id))
+      : filteredAssets;
+    const csvContent = [
+      ['Asset No', 'İsim', 'Seri No', 'Durum', 'Kategori', 'Tarih'],
+      ...dataToExport.map(asset => [
+        asset.assetNumber,
+        asset.name,
+        asset.serialNumber,
+        getStatusText(asset.status),
+        categories.find(c => c.id === asset.categoryId)?.name || '',
+        formatDate(asset.createdAt)
+      ])
+    ].map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `assets_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
 
- const handleViewDetails = (assetId: string) => {
-   setSelectedAssetId(assetId);
-   setShowDetailsModal(true);
- };
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'Available': return 'bg-success';
+      case 'Assigned': return 'bg-primary';
+      case 'Maintenance': return 'bg-warning';
+      case 'Damaged': return 'bg-danger';
+      default: return 'bg-secondary';
+    }
+  };
 
- const handleEdit = (assetId: string) => {
-   setSelectedAssetId(assetId);
-   setShowEditModal(true);
- };
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'Available': return 'Müsait';
+      case 'Assigned': return 'Atanmış';
+      case 'Maintenance': return 'Bakımda';
+      case 'Damaged': return 'Hasarlı';
+      default: return status;
+    }
+  };
 
- const handleDelete = async () => {
-   if (!selectedAssetId) return;
-   
-   try {
-     await assetsApi.delete(selectedAssetId);
-     await loadAssets(); // Listeyi yenile
-     setShowDeleteConfirm(false);
-     setSelectedAssetId(null);
-     showAlert('Asset başarıyla silindi!', 'success');
-   } catch (error) {
-     console.error('Asset silinirken hata:', error);
-     showAlert('Asset silinirken hata oluştu!', 'danger');
-   }
- };
-
- const handleBulkDelete = async () => {
-   if (selectedAssets.length === 0) return;
-   
-   try {
-     // Tek tek silme işlemi (bulkOperationsApi olmadığı için)
-     const deletePromises = selectedAssets.map(id => assetsApi.delete(id));
-     await Promise.all(deletePromises);
-     
-     await loadAssets(); // Listeyi yenile
-     setShowBulkDeleteConfirm(false);
-     setSelectedAssets([]);
-     
-     showAlert(`${selectedAssets.length} asset başarıyla silindi!`, 'success');
-   } catch (error) {
-     console.error('Toplu silme hatası:', error);
-     showAlert('Toplu silme işlemi başarısız!', 'danger');
-   }
- };
-
-const handleQRCode = async (asset: Asset) => {
-  try {
-    // QRGenerator sayfasına yönlendirme - URL'yi düzeltin
-    navigate(`/dashboard/assets/qr-generator/${asset.id}`, {
-      state: {
-        assetId: asset.id,
-        assetNumber: asset.assetNumber,
-        name: asset.name
-      }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
-  } catch (error) {
-    console.error('QR sayfasına yönlendirme hatası:', error);
-    showAlert('Sayfa yönlendirmesi başarısız!', 'danger');
-  }
-};
- // CSV Export helper fonksiyonları
- const generateCSV = (data: Asset[]) => {
-   const headers = ['Asset Number', 'Name', 'Serial Number', 'Status', 'Category', 'Created At'];
-   const rows = data.map(asset => [
-     asset.assetNumber,
-     asset.name,
-     asset.serialNumber,
-     asset.status,
-     categories.find(c => c.id === asset.categoryId)?.name || '',
-     formatDate(asset.createdAt)
-   ]);
-   
-   return [headers, ...rows].map(row => row.join(',')).join('\n');
- };
+  };
 
- const downloadCSV = (content: string, filename: string) => {
-   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-   const link = document.createElement('a');
-   const url = URL.createObjectURL(blob);
-   link.setAttribute('href', url);
-   link.setAttribute('download', filename);
-   link.style.visibility = 'hidden';
-   document.body.appendChild(link);
-   link.click();
-   document.body.removeChild(link);
- };
+  const showAlert = (message: string, type: 'success' | 'danger' | 'info' = 'info') => {
+    // Toast notification implementation
+    console.log(`${type}: ${message}`);
+  };
 
- const handleExport = async () => {
-   try {
-     // Manual CSV export (exportImportApi olmadığı için)
-     const dataToExport = selectedAssets.length > 0 
-       ? filteredAssets.filter(asset => selectedAssets.includes(asset.id))
-       : filteredAssets;
-     
-     const csvContent = generateCSV(dataToExport);
-     downloadCSV(csvContent, 'assets-export.csv');
-     
-     showAlert('Assets başarıyla dışa aktarıldı!', 'success');
-   } catch (error) {
-     console.error('Export hatası:', error);
-     showAlert('Export işlemi başarısız!', 'danger');
-   }
- };
+  return (
+    <div className="container-fluid p-4">
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 className="mb-1 fw-bold">📦 Asset Yönetimi</h4>
+          <p className="text-muted mb-0">
+            Tüm zimmet kayıtlarını görüntüle ve yönet • {assets.length} asset
+          </p>
+        </div>
+        <div className="d-flex gap-2">
+          <button 
+            className="btn btn-outline-primary btn-sm"
+            onClick={handleExport}
+          >
+            <i className="bi bi-download me-1"></i>
+            Dışa Aktar
+          </button>
+          <button 
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowAddModal(true)}
+          >
+            <i className="bi bi-plus-lg me-1"></i>
+            Yeni Asset
+          </button>
+        </div>
+      </div>
 
- const handleSelectAsset = (assetId: string) => {
-   setSelectedAssets(prev => 
-     prev.includes(assetId) 
-       ? prev.filter(id => id !== assetId)
-       : [...prev, assetId]
-   );
- };
-
- const handleSelectAll = () => {
-   if (selectedAssets.length === filteredAssets.length) {
-     setSelectedAssets([]);
-   } else {
-     setSelectedAssets(filteredAssets.map(asset => asset.id));
-   }
- };
-
- const getStatusColor = (status: string) => {
-   switch (status) {
-     case 'Available': return 'bg-success';
-     case 'Assigned': return 'bg-primary';
-     case 'Maintenance': return 'bg-warning';
-     case 'Damaged': return 'bg-danger';
-     default: return 'bg-secondary';
-   }
- };
-
- const getStatusText = (status: string) => {
-   switch (status) {
-     case 'Available': return 'Müsait';
-     case 'Assigned': return 'Atanmış';
-     case 'Maintenance': return 'Bakımda';
-     case 'Damaged': return 'Hasarlı';
-     default: return status;
-   }
- };
-
- const formatDate = (dateString: string) => {
-   return new Date(dateString).toLocaleDateString('tr-TR', {
-     day: '2-digit',
-     month: '2-digit',
-     year: 'numeric'
-   });
- };
-
- const showAlert = (message: string, type: 'success' | 'danger' | 'info' = 'info') => {
-   const alertDiv = document.createElement('div');
-   alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed shadow-lg border-0`;
-   alertDiv.style.top = '20px';
-   alertDiv.style.right = '20px';
-   alertDiv.style.zIndex = '9999';
-   alertDiv.style.borderRadius = '12px';
-   alertDiv.innerHTML = `
-     <div class="d-flex align-items-center">
-       <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
-       <span>${message}</span>
-     </div>
-     <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-   `;
-   document.body.appendChild(alertDiv);
-   setTimeout(() => {
-     if (alertDiv.parentNode) alertDiv.remove();
-   }, 4000);
- };
-
- if (loading) {
-   return (
-     <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-       <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-         <div className="card border-0 shadow-sm p-5 text-center" style={{ borderRadius: '8px', backgroundColor: '#ffffff' }}>
-           <div className="spinner-border text-primary mb-4" style={{ width: '4rem', height: '4rem' }}></div>
-           <h4 className="text-dark fw-bold mb-2">Assets Yükleniyor...</h4>
-           <p className="text-muted">Lütfen bekleyiniz</p>
-         </div>
-       </div>
-     </div>
-   );
- }
-  if (loading) {
-    return (
-      <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-          <div className="card border-0 shadow-sm p-5 text-center" style={{ borderRadius: '8px', backgroundColor: '#ffffff' }}>
-            <div className="spinner-border text-primary mb-4" style={{ width: '4rem', height: '4rem' }}></div>
-            <h4 className="text-dark fw-bold mb-2">Assets Yükleniyor...</h4>
-            <p className="text-muted">Lütfen bekleyiniz</p>
+      {/* Stats Cards - Compact Version */}
+      <div className="row g-3 mb-4">
+        <div className="col-md-3">
+          <div className="card border-0 bg-primary bg-opacity-10">
+            <div className="card-body p-3">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-boxes text-primary fs-4 me-2"></i>
+                <div>
+                  <div className="fw-bold text-primary">{assets.length}</div>
+                  <small className="text-muted">Toplam</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="card border-0 bg-success bg-opacity-10">
+            <div className="card-body p-3">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-check-circle text-success fs-4 me-2"></i>
+                <div>
+                  <div className="fw-bold text-success">{assets.filter(a => a.status === 'Available').length}</div>
+                  <small className="text-muted">Müsait</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="card border-0 bg-primary bg-opacity-10">
+            <div className="card-body p-3">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-person-check text-primary fs-4 me-2"></i>
+                <div>
+                  <div className="fw-bold text-primary">{assets.filter(a => a.status === 'Assigned').length}</div>
+                  <small className="text-muted">Atanmış</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="card border-0 bg-warning bg-opacity-10">
+            <div className="card-body p-3">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-tools text-warning fs-4 me-2"></i>
+                <div>
+                  <div className="fw-bold text-warning">{assets.filter(a => a.status === 'Maintenance').length}</div>
+                  <small className="text-muted">Bakımda</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <>
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" />
-      
-      <div className="container-fluid p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        {/* Header */}
-        <div className="card border-0 shadow-sm mb-5" style={{ borderRadius: '8px', backgroundColor: '#ffffff' }}>
-          <div className="card-body p-4">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <nav aria-label="breadcrumb">
-                  <ol className="breadcrumb mb-3">
-                    <li className="breadcrumb-item">
-                      <a href="#" className="text-decoration-none text-primary">
-                        <i className="bi bi-house-door me-1"></i>
-                        Ana Sayfa
-                      </a>
-                    </li>
-                    <li className="breadcrumb-item active text-muted" aria-current="page">Tüm Asset'lar</li>
-                  </ol>
-                </nav>
-                <div className="d-flex align-items-center">
-                  <div className="bg-primary bg-opacity-10 rounded p-2 me-3">
-                    <i className="bi bi-boxes text-primary fs-4"></i>
-                  </div>
-                  <div>
-                    <h2 className="mb-1 fw-bold text-dark">Asset Yönetimi</h2>
-                    <p className="text-muted mb-0">Tüm zimmet kayıtlarını görüntüle ve yönet</p>
-                  </div>
-                </div>
-              </div>
-              <div className="d-flex gap-2">
-                <button
-                  onClick={handleExport}
-                  className="btn btn-outline-primary shadow-sm"
-                  style={{ borderRadius: '6px', padding: '10px 20px' }}
-                >
-                  <i className="bi bi-download me-2"></i>
-                  Dışa Aktar
-                </button>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="btn btn-primary shadow-sm"
-                  style={{ borderRadius: '6px', padding: '10px 20px' }}
-                >
-                  <i className="bi bi-plus-lg me-2"></i>
-                  Yeni Asset
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        {stats && (
-          <div className="row g-4 mb-5">
-            <div className="col-md-2">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '8px', transition: 'all 0.3s ease' }}>
-                <div className="card-body text-center p-4">
-                  <div className="bg-primary bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
-                    <i className="bi bi-boxes text-primary fs-3"></i>
-                  </div>
-                  <h3 className="fw-bold mb-2 text-primary">{stats.total || assets.length}</h3>
-                  <p className="text-muted mb-0 fw-medium">Toplam</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-2">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '8px', transition: 'all 0.3s ease' }}>
-                <div className="card-body text-center p-4">
-                  <div className="bg-success bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
-                    <i className="bi bi-check-circle text-success fs-3"></i>
-                  </div>
-                  <h3 className="fw-bold mb-2 text-success">{stats.available || assets.filter(a => a.status === 'Available').length}</h3>
-                  <p className="text-muted mb-0 fw-medium">Müsait</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-2">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '8px', transition: 'all 0.3s ease' }}>
-                <div className="card-body text-center p-4">
-                  <div className="bg-primary bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
-                    <i className="bi bi-person-check text-primary fs-3"></i>
-                  </div>
-                  <h3 className="fw-bold mb-2 text-primary">{stats.assigned || assets.filter(a => a.status === 'Assigned').length}</h3>
-                  <p className="text-muted mb-0 fw-medium">Atanmış</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '8px', transition: 'all 0.3s ease' }}>
-                <div className="card-body text-center p-4">
-                  <div className="bg-warning bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
-                    <i className="bi bi-tools text-warning fs-3"></i>
-                  </div>
-                  {/* Damaged kaldırıldı */}
-                  <p className="text-muted mb-0 fw-medium">Bakımda</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '8px', transition: 'all 0.3s ease' }}>
-                <div className="card-body text-center p-4">
-                  <div className="bg-danger bg-opacity-10 rounded-circle p-3 mb-3 d-inline-block">
-                    <i className="bi bi-exclamation-triangle text-danger fs-3"></i>
-                  </div>
-                  {/* Damaged kaldırıldı */}
-                  <p className="text-muted mb-0 fw-medium">Hasarlı</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '8px' }}>
-          <div className="card-header border-0 p-4" style={{ backgroundColor: '#ffffff', borderRadius: '8px 8px 0 0' }}>
-            <div className="d-flex align-items-center">
-              <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                <i className="bi bi-funnel text-primary fs-4"></i>
-              </div>
-              <h4 className="mb-0 fw-bold text-dark">Filtreler</h4>
-            </div>
-          </div>
-          <div className="card-body p-4">
-            <div className="row g-3">
-              <div className="col-md-3">
-                <label className="form-label fw-semibold text-dark mb-2">
-                  <i className="bi bi-search me-2"></i>
-                  Asset Ara
-                </label>
+      {/* Filters & Search */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-6">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
                 <input
                   type="text"
-                  className="form-control shadow-sm border-0 bg-light"
-                  placeholder="İsim, asset no, seri no..."
+                  className="form-control"
+                  placeholder="Asset ara (isim, asset no, seri no)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ borderRadius: '6px', padding: '12px 16px', fontSize: '1rem' }}
                 />
               </div>
-              
-              <div className="col-md-3">
-                <label className="form-label fw-semibold text-dark mb-2">
-                  <i className="bi bi-tags me-2"></i>
-                  Kategori
-                </label>
-                <select
-                  className="form-select shadow-sm border-0 bg-light"
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  style={{ borderRadius: '6px', padding: '12px 16px', fontSize: '1rem' }}
-                >
-                  <option value="all">Tüm Kategoriler</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label fw-semibold text-dark mb-2">
-                  <i className="bi bi-activity me-2"></i>
-                  Durum
-                </label>
-                <select
-                  className="form-select shadow-sm border-0 bg-light"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  style={{ borderRadius: '6px', padding: '12px 16px', fontSize: '1rem' }}
-                >
-                  <option value="all">Tüm Durumlar</option>
-                  <option value="Available">Müsait</option>
-                  <option value="Assigned">Atanmış</option>
-                  <option value="Maintenance">Bakımda</option>
-                  {/* Damaged kaldırıldı */}
-                </select>
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label fw-semibold text-dark mb-2">
-                  <i className="bi bi-building me-2"></i>
-                  Departman
-                </label>
-                <select
-                  className="form-select shadow-sm border-0 bg-light"
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  style={{ borderRadius: '6px', padding: '12px 16px', fontSize: '1rem' }}
-                >
-                  <option value="all">Tüm Departmanlar</option>
-                  {departments.map(dept => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Results Summary */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div className="text-muted">
-            Toplam <span className="fw-bold text-dark">{filteredAssets.length}</span> asset gösteriliyor
-            {searchTerm && (
-              <span> • "<span className="fw-bold text-dark">{searchTerm}</span>" için sonuçlar</span>
-            )}
-            {selectedAssets.length > 0 && (
-              <span> • <span className="fw-bold text-primary">{selectedAssets.length}</span> asset seçili</span>
-            )}
-          </div>
-          <div className="d-flex gap-2">
-            {selectedAssets.length > 0 && (
-              <>
-                <button
-                  onClick={() => setShowBulkDeleteConfirm(true)}
-                  className="btn btn-outline-danger btn-sm"
-                  style={{ borderRadius: '6px' }}
-                >
-                  <i className="bi bi-trash me-1"></i>
-                  Seçilenleri Sil ({selectedAssets.length})
-                </button>
-                <button
-                  onClick={handleExport}
-                  className="btn btn-outline-primary btn-sm"
-                  style={{ borderRadius: '6px' }}
-                >
-                  <i className="bi bi-download me-1"></i>
-                  Seçilenleri Dışa Aktar
-                </button>
-              </>
-            )}
-            {(searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || departmentFilter !== 'all') && (
-              <button
+            <div className="col-md-3">
+              <select 
+                className="form-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">Tüm Durumlar</option>
+                <option value="Available">Müsait</option>
+                <option value="Assigned">Atanmış</option>
+                <option value="Maintenance">Bakımda</option>
+                <option value="Damaged">Hasarlı</option>
+              </select>
+            </div>
+            <div className="col-md-2">
+              <select 
+                className="form-select"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
+                <option value="">Kategoriler</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-1">
+              <button 
+                className="btn btn-outline-secondary w-100"
                 onClick={() => {
                   setSearchTerm('');
-                  setStatusFilter('all');
-                  setCategoryFilter('all');
-                  setDepartmentFilter('all');
+                  setStatusFilter('');
+                  setCategoryFilter('');
                 }}
-                className="btn btn-outline-secondary btn-sm"
-                style={{ borderRadius: '6px' }}
+                title="Filtreleri Temizle"
               >
-                <i className="bi bi-x-circle me-1"></i>
-                Filtreleri Temizle
+                <i className="bi bi-x-lg"></i>
               </button>
-            )}
-          </div>
-        </div>
-
-        {/* Assets Table */}
-        <div className="card border-0 shadow-sm" style={{ borderRadius: '8px' }}>
-          <div className="card-header border-0 p-4" style={{ backgroundColor: '#ffffff', borderRadius: '8px 8px 0 0' }}>
-            <div className="d-flex align-items-center">
-              <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                <i className="bi bi-list-ul text-primary fs-4"></i>
-              </div>
-              <h4 className="mb-0 fw-bold text-dark">Asset Listesi</h4>
             </div>
           </div>
-          <div className="card-body p-0">
+        </div>
+      </div>
+
+      {/* Assets Table */}
+      <div className="card border-0 shadow-sm">
+        <div className="card-header bg-transparent border-0">
+          <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center">
+              <div className="form-check me-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
+                  onChange={handleSelectAll}
+                />
+              </div>
+              <span className="fw-medium">
+                {filteredAssets.length} asset
+                {selectedAssets.length > 0 && ` (${selectedAssets.length} seçili)`}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="card-body p-0">
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Yükleniyor...</span>
+              </div>
+              <p className="mt-2 text-muted">Assets yükleniyor...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-5">
+              <div className="text-danger mb-3">
+                <i className="bi bi-exclamation-triangle fs-1"></i>
+              </div>
+              <h6 className="text-danger">Hata!</h6>
+              <p className="text-muted">{error}</p>
+              <button className="btn btn-outline-primary btn-sm" onClick={loadAllData}>
+                <i className="bi bi-arrow-clockwise me-1"></i>
+                Tekrar Dene
+              </button>
+            </div>
+          ) : filteredAssets.length === 0 ? (
+            <div className="text-center py-5">
+              <div className="text-muted mb-3">
+                <i className="bi bi-inbox fs-1"></i>
+              </div>
+              <h6 className="text-muted">Asset Bulunamadı</h6>
+              <p className="text-muted">
+                {searchTerm || statusFilter || categoryFilter ? 'Arama kriterlerinizi değiştirip tekrar deneyin' : 'Henüz asset eklenmemiş'}
+              </p>
+            </div>
+          ) : (
             <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0">
+              <table className="table table-hover mb-0">
                 <thead className="bg-light">
                   <tr>
-                    <th className="text-dark fw-semibold border-0 px-4 py-3" style={{ fontSize: '0.95rem' }}>
-                      <div className="d-flex align-items-center">
-                        <input
-                          type="checkbox"
-                          className="form-check-input me-2"
-                          checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
-                          onChange={handleSelectAll}
-                        />
-                        <i className="bi bi-check-square me-2"></i>
-                        Seç
-                      </div>
-                    </th>
-                    <th
-                      className="text-dark fw-semibold cursor-pointer border-0 px-4 py-3"
-                      onClick={() => handleSort('name')}
-                      style={{ fontSize: '0.95rem', cursor: 'pointer' }}
-                    >
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-box me-2"></i>
-                        Asset Bilgileri
-                        {sortBy === 'name' && (
-                          <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'} ms-2`}></i>
-                        )}
-                      </div>
-                    </th>
-                    <th className="text-dark fw-semibold border-0 px-4 py-3" style={{ fontSize: '0.95rem' }}>
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-tags me-2"></i>
-                        Kategori
-                      </div>
-                    </th>
-                    <th className="text-dark fw-semibold border-0 px-4 py-3" style={{ fontSize: '0.95rem' }}>
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-person me-2"></i>
-                        Atanan Kişi
-                      </div>
-                    </th>
-                    <th
-                      className="text-dark fw-semibold cursor-pointer border-0 px-4 py-3"
-                      onClick={() => handleSort('status')}
-                      style={{ fontSize: '0.95rem', cursor: 'pointer' }}
-                    >
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-activity me-2"></i>
-                        Durum
-                        {sortBy === 'status' && (
-                          <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'} ms-2`}></i>
-                        )}
-                      </div>
-                    </th>
-                    <th className="text-dark fw-semibold border-0 px-4 py-3" style={{ fontSize: '0.95rem' }}>
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-building me-2"></i>
-                        Departman
-                      </div>
-                    </th>
-                    <th
-                      className="text-dark fw-semibold cursor-pointer border-0 px-4 py-3"
-                      onClick={() => handleSort('createdAt')}
-                      style={{ fontSize: '0.95rem', cursor: 'pointer' }}
-                    >
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-calendar-check me-2"></i>
-                        Tarih
-                        {sortBy === 'createdAt' && (
-                          <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'} ms-2`}></i>
-                        )}
-                      </div>
-                    </th>
-                    <th className="text-dark fw-semibold border-0 px-4 py-3" style={{ fontSize: '0.95rem' }}>
-                      <div className="d-flex align-items-center">
-                        <i className="bi bi-gear me-2"></i>
-                        İşlemler
-                      </div>
-                    </th>
+                    <th style={{ width: '40px' }}></th>
+                    <th>Asset</th>
+                    <th>Kategori</th>
+                    <th>Durum</th>
+                    <th>Atanan</th>
+                    <th>Tarih</th>
+                    <th style={{ width: '120px' }}>İşlemler</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAssets.map((asset, index) => (
-                    <tr key={asset.id} className="border-0" style={{ backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white' }}>
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          checked={selectedAssets.includes(asset.id)}
-                          onChange={() => handleSelectAsset(asset.id)}
-                        />
+                  {filteredAssets.map((asset) => (
+                    <tr key={asset.id}>
+                      <td>
+                        <div className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={selectedAssets.includes(asset.id)}
+                            onChange={() => handleAssetSelect(asset.id)}
+                          />
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <div className="d-flex align-items-center">
-                          <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                          <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                             <i className="bi bi-box text-primary"></i>
                           </div>
                           <div>
-                            <div className="fw-semibold text-dark" style={{ fontSize: '1.05rem' }}>{asset.name}</div>
-                            <div className="text-muted small">
-                              <span className="badge bg-light text-dark me-2">{asset.assetNumber}</span>
-                              <span className="badge bg-light text-dark">{asset.serialNumber}</span>
-                            </div>
+                            <div className="fw-medium">{asset.name}</div>
+                            <small className="text-muted">
+                              {asset.assetNumber} • {asset.serialNumber}
+                            </small>
                           </div>
                         </div>
                       </td>
-                      
-                      <td className="px-4 py-3">
-                        {asset.categoryName ? (
-                          <span className="badge bg-purple text-white px-3 py-2 fw-semibold" style={{ fontSize: '0.9rem', borderRadius: '8px', backgroundColor: '#6f42c1' }}>
-                            {asset.categoryName}
-                          </span>
-                        ) : (
-                          <span className="text-muted">-</span>
-                        )}
+                      <td>
+                        <span className="badge bg-secondary">
+                          {categories.find(c => c.id === asset.categoryId)?.name || 'N/A'}
+                        </span>
                       </td>
-                      
-                      <td className="px-4 py-3">
-                        {asset.assignedToName ? (
-                          <div>
-                            <div className="fw-semibold text-dark">{asset.assignedToName}</div>
-                            <div className="text-muted small">{asset.assignedToEmployeeNumber}</div>
-                          </div>
-                        ) : (
-                          <span className="text-muted">Atanmamış</span>
-                        )}
-                      </td>
-                      
-                      <td className="px-4 py-3">
-                        <span className={`badge ${getStatusColor(asset.status)} px-3 py-2 fw-semibold`} style={{ fontSize: '0.9rem', borderRadius: '8px' }}>
+                      <td>
+                        <span className={`badge ${getStatusBadgeColor(asset.status)}`}>
                           {getStatusText(asset.status)}
                         </span>
                       </td>
-                      
-                      <td className="px-4 py-3">
-                        {asset.departmentName ? (
-                          <span className="badge bg-info text-white px-3 py-2 fw-semibold" style={{ fontSize: '0.9rem', borderRadius: '8px' }}>
-                            {asset.departmentName}
-                          </span>
-                        ) : (
-                          <span className="text-muted">-</span>
-                        )}
+                      <td>
+                        <span className="text-muted">
+                          {asset.assignedToName || 'Atanmamış'}
+                        </span>
                       </td>
-                      
-                      <td className="px-4 py-3">
-                        <div className="d-flex align-items-center text-muted">
-                          <i className="bi bi-calendar3 me-2"></i>
-                          <span style={{ fontSize: '0.95rem' }}>
-                            {asset.updatedAt ? formatDate(asset.updatedAt) : formatDate(asset.createdAt)}
-                          </span>
-                        </div>
+                      <td>
+                        <small className="text-muted">
+                          {formatDate(asset.createdAt)}
+                        </small>
                       </td>
-                      
-                      <td className="px-4 py-3">
-                        <div className="d-flex gap-2">
+                      <td>
+                        <div className="d-flex gap-1">
                           <button
+                            className="btn btn-outline-primary btn-sm"
                             onClick={() => handleViewDetails(asset.id)}
-                            className="btn btn-outline-primary btn-sm shadow-sm"
-                            title="Detayları Görüntüle"
-                            style={{ borderRadius: '6px', padding: '8px 12px' }}
+                            title="Görüntüle"
                           >
                             <i className="bi bi-eye"></i>
                           </button>
-                          
                           <button
+                            className="btn btn-outline-success btn-sm"
                             onClick={() => handleQRCode(asset)}
-                            className="btn btn-outline-success btn-sm shadow-sm"
                             title="QR Kod"
-                            style={{ borderRadius: '6px', padding: '8px 12px' }}
                           >
                             <i className="bi bi-qr-code"></i>
                           </button>
-                          
                           <button
+                            className="btn btn-outline-warning btn-sm"
                             onClick={() => handleEdit(asset.id)}
-                            className="btn btn-outline-warning btn-sm shadow-sm"
                             title="Düzenle"
-                            style={{ borderRadius: '6px', padding: '8px 12px' }}
                           >
                             <i className="bi bi-pencil"></i>
                           </button>
-                          
                           <button
+                            className="btn btn-outline-danger btn-sm"
                             onClick={() => {
                               setSelectedAssetId(asset.id);
                               setShowDeleteConfirm(true);
                             }}
-                            className="btn btn-outline-danger btn-sm shadow-sm"
                             title="Sil"
-                            style={{ borderRadius: '6px', padding: '8px 12px' }}
                           >
                             <i className="bi bi-trash"></i>
                           </button>
@@ -846,223 +512,133 @@ const handleQRCode = async (asset: Asset) => {
                 </tbody>
               </table>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Empty State */}
-            {filteredAssets.length === 0 && !loading && (
-              <div className="text-center py-5">
-                <div className="card border-0 shadow-sm mx-auto" style={{ maxWidth: '400px', borderRadius: '8px' }}>
-                  <div className="card-body p-5">
-                    <div className="bg-light rounded-circle p-4 mb-4 d-inline-block">
-                      <i className="bi bi-inbox fs-1 text-muted"></i>
-                    </div>
-                    <h5 className="fw-bold text-dark mb-2">Asset Bulunamadı</h5>
-                    <p className="text-muted mb-4">
-                      {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' || departmentFilter !== 'all'
-                        ? 'Filtreleri değiştirmeyi deneyin veya yeni asset ekleyin'
-                        : 'Henüz hiç asset eklenmemiş. İlk asset\'ınızı ekleyin!'
-                      }
-                    </p>
-                    <button
-                      onClick={() => setShowAddModal(true)}
-                      className="btn btn-primary shadow-sm"
-                      style={{ borderRadius: '6px', padding: '10px 20px' }}
-                    >
-                      <i className="bi bi-plus-lg me-2"></i>
-                      Yeni Asset Ekle
-                    </button>
+      {/* Modals burada olacak - AssetDetailsModal, EditAssetModal, AddAssetModal, DeleteConfirmModal */}
+      {showDetailsModal && selectedAssetId && (
+        <AssetDetailsModal
+          assetId={selectedAssetId}
+          assets={assets}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedAssetId(null);
+          }}
+        />
+      )}
+
+      {showEditModal && selectedAssetId && (
+        <EditAssetModal
+          assetId={selectedAssetId}
+          assets={assets}
+          onSuccess={async () => {
+            setShowEditModal(false);
+            setSelectedAssetId(null);
+            await loadAssets();
+            showAlert('Asset başarıyla güncellendi!', 'success');
+          }}
+          onCancel={() => {
+            setShowEditModal(false);
+            setSelectedAssetId(null);
+          }}
+          categories={categories}
+        />
+      )}
+
+      {showAddModal && (
+        <AddAssetModal
+          onSuccess={async () => {
+            setShowAddModal(false);
+            await loadAssets();
+            showAlert('Asset başarıyla eklendi!', 'success');
+          }}
+          onCancel={() => setShowAddModal(false)}
+          categories={categories}
+          users={users}
+        />
+      )}
+
+      {showDeleteConfirm && selectedAssetId && (
+        <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-sm" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+              <div className="modal-header border-0 p-4 bg-danger">
+                <h4 className="modal-title text-white fw-bold mb-0">
+                  <i className="bi bi-trash me-3"></i>
+                  Asset Sil
+                </h4>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white" 
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setSelectedAssetId(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body p-4">
+                <div className="text-center mb-4">
+                  <div className="bg-danger bg-opacity-10 rounded-circle p-4 mb-4 d-inline-block">
+                    <i className="bi bi-exclamation-triangle text-danger fs-1"></i>
                   </div>
+                  <h5 className="fw-bold text-dark mb-2">Silme İşlemini Onayla</h5>
+                  <p className="text-muted mb-0">
+                    Bu asset'i kalıcı olarak silmek istediğinizden emin misiniz? 
+                    <br />
+                    <strong>Bu işlem geri alınamaz.</strong>
+                  </p>
                 </div>
               </div>
-            )}
+              <div className="modal-footer border-0 p-4 bg-light">
+                <button
+                  type="button"
+                  className="btn btn-light shadow-sm"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setSelectedAssetId(null);
+                  }}
+                  style={{ borderRadius: '6px', padding: '10px 20px' }}
+                >
+                  <i className="bi bi-x-lg me-2"></i>
+                  İptal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="btn btn-danger shadow-sm"
+                  style={{ borderRadius: '6px', padding: '10px 20px' }}
+                >
+                  <i className="bi bi-trash me-2"></i>
+                  Sil
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-    {/* Asset Details Modal */}
-{showDetailsModal && selectedAssetId && (
-  <AssetDetailsModal
-    assetId={selectedAssetId}
-    assets={assets} // ← BU SATIRI EKLEYİN
-    onClose={() => {
-      setShowDetailsModal(false);
-      setSelectedAssetId(null);
-    }}
-  />
-)}
-
-        {/* Edit Asset Modal */}
-     
-{showEditModal && selectedAssetId && (
-  <EditAssetModal
-    assetId={selectedAssetId}
-    assets={assets} // ← BU SATIRI EKLEYİN
-    onSuccess={async () => {
-      setShowEditModal(false);
-      setSelectedAssetId(null);
-      await loadAssets();
-      showAlert('Asset başarıyla güncellendi!', 'success');
-    }}
-    onCancel={() => {
-      setShowEditModal(false);
-      setSelectedAssetId(null);
-    }}
-    categories={categories}
-  />
-)}
-
-        {/* Bulk Delete Confirmation Modal */}
-        {showBulkDeleteConfirm && selectedAssets.length > 0 && (
-          <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content border-0 shadow-sm" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                <div className="modal-header border-0 p-4 bg-danger">
-                  <h4 className="modal-title text-white fw-bold mb-0">
-                    <i className="bi bi-trash me-3"></i>
-                    Toplu Silme İşlemi
-                  </h4>
-                  <button 
-                    type="button" 
-                    className="btn-close btn-close-white" 
-                    onClick={() => {
-                      setShowBulkDeleteConfirm(false);
-                      setSelectedAssets([]);
-                    }}
-                  ></button>
-                </div>
-                <div className="modal-body p-4">
-                  <div className="text-center mb-4">
-                    <div className="bg-danger bg-opacity-10 rounded-circle p-4 mb-4 d-inline-block">
-                      <i className="bi bi-exclamation-triangle text-danger fs-1"></i>
-                    </div>
-                    <h5 className="fw-bold text-dark mb-2">Toplu Silme İşlemini Onayla</h5>
-                    <p className="text-muted mb-0">
-                      Seçili <strong>{selectedAssets.length}</strong> asset'i kalıcı olarak silmek istediğinizden emin misiniz?
-                      <br />
-                      <strong>Bu işlem geri alınamaz.</strong>
-                    </p>
-                  </div>
-                </div>
-                <div className="modal-footer border-0 p-4 bg-light">
-                  <button
-                    type="button"
-                    className="btn btn-light shadow-sm"
-                    onClick={() => {
-                      setShowBulkDeleteConfirm(false);
-                      setSelectedAssets([]);
-                    }}
-                    style={{ borderRadius: '6px', padding: '10px 20px' }}
-                  >
-                    <i className="bi bi-x-lg me-2"></i>
-                    İptal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleBulkDelete}
-                    className="btn btn-danger shadow-sm"
-                    style={{ borderRadius: '6px', padding: '10px 20px' }}
-                  >
-                    <i className="bi bi-trash me-2"></i>
-                    {selectedAssets.length} Asset'i Sil
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {showDeleteConfirm && selectedAssetId && (
-          <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content border-0 shadow-sm" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                <div className="modal-header border-0 p-4 bg-danger">
-                  <h4 className="modal-title text-white fw-bold mb-0">
-                    <i className="bi bi-trash me-3"></i>
-                    Asset'i Sil
-                  </h4>
-                  <button 
-                    type="button" 
-                    className="btn-close btn-close-white" 
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setSelectedAssetId(null);
-                    }}
-                  ></button>
-                </div>
-                <div className="modal-body p-4">
-                  <div className="text-center mb-4">
-                    <div className="bg-danger bg-opacity-10 rounded-circle p-4 mb-4 d-inline-block">
-                      <i className="bi bi-exclamation-triangle text-danger fs-1"></i>
-                    </div>
-                    <h5 className="fw-bold text-dark mb-2">Silme İşlemini Onayla</h5>
-                    <p className="text-muted mb-0">
-                      Bu asset'i kalıcı olarak silmek istediğinizden emin misiniz? 
-                      <br />
-                      <strong>Bu işlem geri alınamaz.</strong>
-                    </p>
-                  </div>
-                </div>
-                <div className="modal-footer border-0 p-4 bg-light">
-                  <button
-                    type="button"
-                    className="btn btn-light shadow-sm"
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setSelectedAssetId(null);
-                    }}
-                    style={{ borderRadius: '6px', padding: '10px 20px' }}
-                  >
-                    <i className="bi bi-x-lg me-2"></i>
-                    İptal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="btn btn-danger shadow-sm"
-                    style={{ borderRadius: '6px', padding: '10px 20px' }}
-                  >
-                    <i className="bi bi-trash me-2"></i>
-                    Sil
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Add Asset Modal */}
-        {showAddModal && (
-          <AddAssetModal
-            onSuccess={async () => {
-              setShowAddModal(false);
-              await loadAssets();
-              showAlert('Asset başarıyla eklendi!', 'success');
-            }}
-            onCancel={() => setShowAddModal(false)}
-            categories={categories}
-            users={users}
-          />
-        )}
-
-        <style>{`
-          .cursor-pointer {
-            cursor: pointer;
-          }
-          .cursor-pointer:hover {
-            background-color: rgba(0,0,0,0.05) !important;
-          }
-          .table tbody tr:hover {
-            background-color: rgba(13, 110, 253, 0.08) !important;
-            transition: all 0.2s ease;
-          }
-          .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-          }
-          .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-          }
-        `}</style>
-      </div>
-    </>
+      <style>{`
+        .cursor-pointer {
+          cursor: pointer;
+        }
+        .cursor-pointer:hover {
+          background-color: rgba(0,0,0,0.05) !important;
+        }
+        .table tbody tr:hover {
+          background-color: rgba(13, 110, 253, 0.08) !important;
+          transition: all 0.2s ease;
+        }
+        .btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+        .card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+      `}</style>
+    </div>
   );
 };
 
@@ -1273,7 +849,6 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // Load existing asset data
-// Load existing asset data
 useEffect(() => {
   const loadAssetData = async () => {
     try {

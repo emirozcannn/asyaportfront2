@@ -5,16 +5,18 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190
 export async function createAsset(assetData: CreateAssetRequest) {
   // Backend'e uygun format - schema'ya göre düzelt
   const requestBody = {
+  assetDto: {
     assetNumber: assetData.assetNumber,
     name: assetData.name,
     serialNumber: assetData.serialNumber,
     categoryId: assetData.categoryId,
-    status: assetData.status || 'Available', // Schema'da geçerli değerler: Available, Assigned, Damaged
+    status: assetData.status || 'Available',
     qrCode: assetData.qrCode,
-    createdBy: assetData.createdBy || '30549f61-ed08-4867-bce0-b80a64ae7199', // Default user ID
+    createdBy: assetData.createdBy || '30549f61-ed08-4867-bce0-b80a64ae7199',
     createdAt: new Date().toISOString(),
     departmentId: assetData.departmentId || null
-  };
+  }
+};
 
   const response = await fetch(`${API_BASE_URL}/api/Assets`, {
     method: 'POST',

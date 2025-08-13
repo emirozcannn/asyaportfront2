@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   getAllAssets, 
   getFilteredAssets, 
+  createAsset,
   getAssetStats,
   deleteAsset,
   categoriesApi,
@@ -19,6 +20,7 @@ interface Category {
   id: string;
   name: string;
   code: string;
+  created_at: string;
 }
 
 interface Department {
@@ -1052,6 +1054,11 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
   categories,
   users
 }) => {
+
+   console.log('🔍 AddAssetModal - Kategoriler:', categories);
+  console.log('🔍 AddAssetModal - Categories length:', categories.length);
+  console.log('🔍 AddAssetModal - Users:', users);
+  
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -1100,51 +1107,53 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
     }));
   };
 
-  // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateStep(1)) {
-      setCurrentStep(1);
-      return;
-    }
+  e.preventDefault();
+  
+  // ✅ Bu satırları ekle
+  console.log('🔍 handleSubmit başladı');
+  console.log('🔍 Form Data:', formData);
+  console.log('🔍 Seçilen categoryId:', formData.categoryId);
+  console.log('🔍 Kategori mevcut mu?:', categories.find(c => c.id === formData.categoryId));
+  
+  if (!validateStep(1)) {
+    console.log('🔍 Validation başarısız!');
+    setCurrentStep(1);
+    return;
+  }
 
-    setLoading(true);
-    try {
-      // Backend API'ye uygun veri yapısı
-      const assetDto = {
-        assetNumber: formData.assetNumber,
-        name: formData.name,
-        serialNumber: formData.serialNumber,
-        categoryId: formData.categoryId,
-        status: 'Available',
-        description: formData.description || undefined,
-        brand: formData.brand || undefined,
-        model: formData.model || undefined,
-        purchaseDate: formData.purchaseDate || undefined,
-        purchasePrice: formData.purchasePrice,
-        warranty: formData.warranty || undefined,
-        location: formData.location || undefined,
-        assignedUserId: formData.assignedUserId || undefined,
-        notes: formData.notes || undefined,
-        createdBy: '30549f61-ed08-4867-bce0-b80a64ae7199', // Mevcut user ID
-        qrCode: `QR-${formData.assetNumber}`
-      };
-      
-      // Mock API call - gerçek implementasyonda assetsApi.create kullanılacak
-      console.log('Creating asset:', assetDto);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      onSuccess();
-    } catch (error) {
-      console.error('Asset oluşturma hatası:', error);
-      setErrors({ submit: 'Asset oluşturulamadı. Lütfen bilgileri kontrol edin.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const assetDto = {
+      assetNumber: formData.assetNumber,
+      name: formData.name,
+      serialNumber: formData.serialNumber,
+      categoryId: formData.categoryId,
+      status: 'Available',
+      description: formData.description || undefined,
+      brand: formData.brand || undefined,
+      model: formData.model || undefined,
+      purchaseDate: formData.purchaseDate || undefined,
+      purchasePrice: formData.purchasePrice,
+      warranty: formData.warranty || undefined,
+      location: formData.location || undefined,
+      assignedUserId: formData.assignedUserId || undefined,
+      notes: formData.notes || undefined,
+      createdBy: '30549f61-ed08-4867-bce0-b80a64ae7199',
+      qrCode: `QR-${formData.assetNumber}`
+    };
+     console.log('🔍 Asset DTO gönderilecek:', assetDto);
+    console.log('🔍 createAsset fonksiyonu çağrılıyor...');
+   await createAsset(assetDto);
+     console.log('🔍 createAsset başarılı!');
+    onSuccess();
+  } catch (error) {
+    console.error('🔍 Asset oluşturma hatası:', error);
+    setErrors({ submit: 'Asset oluşturulamadı. Lütfen bilgileri kontrol edin.' });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
