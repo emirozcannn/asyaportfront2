@@ -1,5 +1,5 @@
-// src/components/UserManagement/UserDetailModal.tsx - API'siz versiyon
-import React, { useState } from 'react';
+// src/components/UserManagement/UserDetailModal.tsx
+import React, { useState, useEffect } from 'react';
 
 // Types
 interface User {
@@ -16,16 +16,27 @@ interface UserDetailModalProps {
   show: boolean;
   user: User | null;
   onClose: () => void;
-  onEdit?: (userId: string) => void;
+  onEdit?: (updatedUser: User) => void;  // Güncellenmiş User objesi dönüyor
 }
 
-const UserDetailModal: React.FC<UserDetailModalProps> = ({ 
-  show, 
-  user, 
-  onClose, 
-  onEdit 
+const UserDetailModal: React.FC<UserDetailModalProps> = ({
+  show,
+  user,
+  onClose,
+  onEdit
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableUser, setEditableUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setEditableUser(user);
+      setIsEditing(false);
+      setError(null);
+    }
+  }, [user]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -66,12 +77,51 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  const handleInputChange = (field: keyof User, value: string) => {
+    if (!editableUser) return;
+    setEditableUser({
+      ...editableUser,
+      [field]: value,
+    });
+  };
+
+  const handleSave = () => {
+    if (!editableUser) return;
+
+    // Basit validasyon örneği
+    if (!editableUser.fullName.trim()) {
+      setError('İsim Soyisim boş olamaz.');
+      return;
+    }
+    if (!editableUser.email.trim()) {
+      setError('E-posta boş olamaz.');
+      return;
+    }
+    if (!editableUser.role.trim()) {
+      setError('Rol seçilmelidir.');
+      return;
+    }
+
+    setError(null);
+
+    onEdit?.(editableUser);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditableUser(user);
+    setIsEditing(false);
+    setError(null);
+  };
+
   const handleClose = () => {
     setActiveTab('overview');
+    setIsEditing(false);
+    setError(null);
     onClose();
   };
 
-  if (!show || !user) return null;
+  if (!show || !user || !editableUser) return null;
 
   return (
     <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -83,128 +133,196 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
               <i className="bi bi-person-circle me-2 text-primary"></i>
               Kullanıcı Detayları
             </h5>
-            <button type="button" className="btn-close" onClick={handleClose}></button>
+            <button type="button" className="btn-close" onClick={handleClose} aria-label="Kapat"></button>
           </div>
 
           {/* Modal Body */}
           <div className="modal-body">
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
+
             {/* User Profile Section */}
             <div className="row mb-4">
               <div className="col-md-4 text-center">
                 {/* Avatar */}
-                <div className="bg-primary bg-opacity-10 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
-                     style={{ width: '80px', height: '80px' }}>
+                <div
+                  className="bg-primary bg-opacity-10 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                  style={{ width: '80px', height: '80px' }}
+                >
                   <i className="bi bi-person fs-1 text-primary"></i>
                 </div>
-                
+
                 {/* User Info */}
-                <h5 className="fw-bold mb-1">{user.fullName}</h5>
-                <p className="text-muted mb-2 small">{user.email}</p>
-                <span className={`badge ${getRoleBadgeColor(user.role)} mb-2`}>
-                  {getRoleDisplayName(user.role)}
-                </span>
-                
-                {/* Status */}
-                <div className="d-flex justify-content-center">
-                  {user.status !== 'Inactive' ? (
-                    <span className="badge bg-success">
-                      <i className="bi bi-check-circle me-1"></i>
-                      Aktif
+                {!isEditing ? (
+                  <>
+                    <h5 className="fw-bold mb-1">{user.fullName}</h5>
+                    <p className="text-muted mb-2 small">{user.email}</p>
+                    <span className={`badge ${getRoleBadgeColor(user.role)} mb-2`}>
+                      {getRoleDisplayName(user.role)}
                     </span>
-                  ) : (
-                    <span className="badge bg-danger">
-                      <i className="bi bi-x-circle me-1"></i>
-                      Pasif
-                    </span>
-                  )}
-                </div>
+
+                    <div className="d-flex justify-content-center">
+                      {user.status !== 'Inactive' ? (
+                        <span className="badge bg-success">
+                          <i className="bi bi-check-circle me-1"></i>
+                          Aktif
+                        </span>
+                      ) : (
+                        <span className="badge bg-danger">
+                          <i className="bi bi-x-circle me-1"></i>
+                          Pasif
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      name="fullName"
+                      placeholder="İsim Soyisim"
+                      className="form-control mb-2 text-center"
+                      value={editableUser.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="E-posta"
+                      className="form-control mb-2 text-center"
+                      value={editableUser.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                    />
+                    <select
+                      name="role"
+                      className="form-select mb-2"
+                      value={editableUser.role}
+                      onChange={(e) => handleInputChange('role', e.target.value)}
+                    >
+                      <option value="SuperAdmin">Süper Admin</option>
+                      <option value="Admin">Admin</option>
+                      <option value="departmentAdmin">Departman Admin</option>
+                      <option value="User">Kullanıcı</option>
+                    </select>
+                    <select
+                      name="status"
+                      className="form-select"
+                      value={editableUser.status || 'Active'}
+                      onChange={(e) => handleInputChange('status', e.target.value as 'Active' | 'Inactive')}
+                    >
+                      <option value="Active">Aktif</option>
+                      <option value="Inactive">Pasif</option>
+                    </select>
+                  </>
+                )}
               </div>
 
               <div className="col-md-8">
-                {/* Contact Info */}
-                <h6 className="fw-semibold mb-3">
-                  <i className="bi bi-info-circle me-2 text-info"></i>
-                  Kullanıcı Bilgileri
-                </h6>
-                
-                <div className="row g-3">
-                  <div className="col-6">
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-envelope text-muted me-2"></i>
-                      <div>
-                        <small className="text-muted d-block">E-posta</small>
-                        <span className="small">{user.email}</span>
+                {!isEditing ? (
+                  <>
+                    {/* Contact Info */}
+                    <h6 className="fw-semibold mb-3">
+                      <i className="bi bi-info-circle me-2 text-info"></i>
+                      Kullanıcı Bilgileri
+                    </h6>
+
+                    <div className="row g-3">
+                      <div className="col-6">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-envelope text-muted me-2"></i>
+                          <div>
+                            <small className="text-muted d-block">E-posta</small>
+                            <span className="small">{user.email}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-6">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-person-badge text-muted me-2"></i>
+                          <div>
+                            <small className="text-muted d-block">Personel No</small>
+                            <code className="bg-light px-2 py-1 rounded small">{user.employeeNumber}</code>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-6">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-shield-check text-muted me-2"></i>
+                          <div>
+                            <small className="text-muted d-block">Rol</small>
+                            <span className="small">{getRoleDisplayName(user.role)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-6">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-calendar-plus text-muted me-2"></i>
+                          <div>
+                            <small className="text-muted d-block">Kayıt Tarihi</small>
+                            <span className="small">{formatDate(user.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-hash text-muted me-2"></i>
+                          <div>
+                            <small className="text-muted d-block">Kullanıcı ID</small>
+                            <code className="bg-light px-2 py-1 rounded small">{user.id}</code>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  </>
+                ) : (
+                  <div className="mb-3">
+                    <label htmlFor="employeeNumber" className="form-label">Personel No</label>
+                    <input
+                      id="employeeNumber"
+                      type="text"
+                      className="form-control"
+                      value={editableUser.employeeNumber}
+                      onChange={(e) => handleInputChange('employeeNumber', e.target.value)}
+                    />
                   </div>
-                  
-                  <div className="col-6">
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-person-badge text-muted me-2"></i>
-                      <div>
-                        <small className="text-muted d-block">Personel No</small>
-                        <code className="bg-light px-2 py-1 rounded small">{user.employeeNumber}</code>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="col-6">
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-shield-check text-muted me-2"></i>
-                      <div>
-                        <small className="text-muted d-block">Rol</small>
-                        <span className="small">{getRoleDisplayName(user.role)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="col-6">
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-calendar-plus text-muted me-2"></i>
-                      <div>
-                        <small className="text-muted d-block">Kayıt Tarihi</small>
-                        <span className="small">{formatDate(user.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="col-12">
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-hash text-muted me-2"></i>
-                      <div>
-                        <small className="text-muted d-block">Kullanıcı ID</small>
-                        <code className="bg-light px-2 py-1 rounded small">{user.id}</code>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
             {/* Tabs Navigation */}
             <ul className="nav nav-pills nav-fill mb-3">
               <li className="nav-item">
-                <button 
+                <button
                   className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
                   onClick={() => setActiveTab('overview')}
+                  type="button"
                 >
                   <i className="bi bi-speedometer2 me-1"></i>
                   Genel Bakış
                 </button>
               </li>
               <li className="nav-item">
-                <button 
+                <button
                   className={`nav-link ${activeTab === 'assignments' ? 'active' : ''}`}
                   onClick={() => setActiveTab('assignments')}
+                  type="button"
                 >
                   <i className="bi bi-box-seam me-1"></i>
                   Zimmetler
                 </button>
               </li>
               <li className="nav-item">
-                <button 
+                <button
                   className={`nav-link ${activeTab === 'activity' ? 'active' : ''}`}
                   onClick={() => setActiveTab('activity')}
+                  type="button"
                 >
                   <i className="bi bi-clock-history me-1"></i>
                   Aktivite
@@ -214,7 +332,6 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
             {/* Tab Content */}
             <div className="tab-content">
-              {/* Overview Tab */}
               {activeTab === 'overview' && (
                 <div className="tab-pane fade show active">
                   <div className="row g-3">
@@ -240,15 +357,13 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       <div className="card bg-info bg-opacity-10 border-0 text-center">
                         <div className="card-body py-3">
                           <i className="bi bi-calendar-event fs-4 text-info mb-2"></i>
-                          <h6 className="fw-bold text-info mb-1">
-                            {getDaysAgo(user.createdAt)}
-                          </h6>
+                          <h6 className="fw-bold text-info mb-1">{getDaysAgo(user.createdAt)}</h6>
                           <small className="text-muted">Gün Önce Katıldı</small>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* User Stats */}
                   <div className="mt-4">
                     <h6 className="fw-semibold mb-3">Özet Bilgiler</h6>
@@ -278,7 +393,6 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Assignments Tab */}
               {activeTab === 'assignments' && (
                 <div className="tab-pane fade show active">
                   <div className="text-center py-4">
@@ -293,15 +407,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Activity Tab */}
               {activeTab === 'activity' && (
                 <div className="tab-pane fade show active">
                   <div className="text-center py-4">
                     <i className="bi bi-activity fs-2 text-muted"></i>
                     <h6 className="text-muted mt-2">Aktivite Geçmişi</h6>
-                    <p className="text-muted small mb-3">
-                      Kullanıcı aktivite geçmişi burada görünecek
-                    </p>
+                    <p className="text-muted small mb-3">Kullanıcı aktivite geçmişi burada görünecek</p>
                     <div className="list-group list-group-flush">
                       <div className="list-group-item d-flex align-items-center">
                         <i className="bi bi-person-plus text-success me-3"></i>
@@ -319,24 +430,34 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
           {/* Modal Footer */}
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={handleClose}>
-              <i className="bi bi-x-lg me-1"></i>
-              Kapat
-            </button>
-            {onEdit && (
-              <button 
-                type="button" 
-                className="btn btn-primary"
-                onClick={() => onEdit(user.id)}
-              >
-                <i className="bi bi-pencil me-1"></i>
-                Düzenle
-              </button>
+            {!isEditing ? (
+              <>
+                <button type="button" className="btn btn-secondary" onClick={handleClose}>
+                  <i className="bi bi-x-lg me-1"></i> Kapat
+                </button>
+                {onEdit && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <i className="bi bi-pencil me-1"></i> Düzenle
+                  </button>
+                )}
+                <button type="button" className="btn btn-outline-success">
+                  <i className="bi bi-plus me-1"></i> Zimmet Ata
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="btn btn-secondary" onClick={handleCancelEdit}>
+                  İptal
+                </button>
+                <button type="button" className="btn btn-success" onClick={handleSave}>
+                  Kaydet
+                </button>
+              </>
             )}
-            <button type="button" className="btn btn-outline-success">
-              <i className="bi bi-plus me-1"></i>
-              Zimmet Ata
-            </button>
           </div>
         </div>
       </div>
