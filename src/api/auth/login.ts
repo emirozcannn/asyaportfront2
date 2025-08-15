@@ -1,6 +1,5 @@
 // src/api/auth/login.ts
-// src/api/auth/login.ts
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = 'http://localhost:7190/api';
 
 export interface LoginRequest {
   email: string;
@@ -29,7 +28,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
   
   try {
     console.log('API_BASE_URL:', API_BASE_URL);
-    const fullUrl = `${API_BASE_URL}/api/Auth/login`;
+    const fullUrl = `${API_BASE_URL}/Auth/login`;
     console.log('Full URL:', fullUrl);
     console.log('Request payload:', { email, password: '***' });
 
@@ -47,34 +46,45 @@ export async function loginUser(email: string, password: string): Promise<LoginR
     console.log('Response status:', response.status);
     console.log('Response ok:', response.ok);
 
+    // Response body'sini sadece bir kez okuyoruz
+    const responseText = await response.text();
+    console.log('Response text:', responseText);
+    console.log('Response headers:', [...response.headers.entries()]);
+    
+    // Hata debugging için daha detaylı log
+    if (!response.ok) {
+      console.error(`HTTP ${response.status} Error:`, responseText);
+    }
+
     if (!response.ok) {
       let errorMessage = 'Giriş başarısız';
-      try {
-        const result = await response.json();
-        console.log('Error response body:', result);
-        errorMessage = result.message || errorMessage;
-        
-        // Supabase error parsing (backend'inizde Supabase kullanıyorsunuz)
-        if (result.error) {
-          try {
-            const supabaseError = JSON.parse(result.error);
-            throw new Error(supabaseError.msg || errorMessage);
-          } catch {
-            throw new Error(errorMessage);
+      
+      if (responseText) {
+        try {
+          const errorResult = JSON.parse(responseText);
+          console.log('Error response body:', errorResult);
+          errorMessage = errorResult.message || errorMessage;
+          
+          // Supabase error parsing
+          if (errorResult.error) {
+            try {
+              const supabaseError = JSON.parse(errorResult.error);
+              throw new Error(supabaseError.msg || errorMessage);
+            } catch {
+              throw new Error(errorMessage);
+            }
           }
+        } catch (parseError) {
+          // JSON parse başarısızsa, düz text olarak kullan
+          console.log('Could not parse error as JSON, using text:', responseText);
+          errorMessage = responseText;
         }
-      } catch (jsonError) {
-        const textResponse = await response.text();
-        console.log('Error response text:', textResponse);
-        errorMessage = textResponse || errorMessage;
       }
       
       throw new Error(errorMessage);
     }
 
-    const responseText = await response.text();
-    console.log('Success response text:', responseText);
-    
+    // Başarılı response işleme
     let result;
     try {
       result = responseText ? JSON.parse(responseText) : {};

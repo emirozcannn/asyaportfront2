@@ -5,43 +5,11 @@ import { deleteUser } from '../../api/users/deleteUser';
 import { getAllUsers } from '../../api/users/getAllUsers';
 
 import UserDetailModal from './UserDetailModal';
+import UserEditModal from './UserEditModal';
+import type { User, UserRole, UserStatus } from '../../api/types/user';
+import type { User as ApiUser } from '../../api/types/user';
 
-// API'den gelen User type (API response'a uygun)
-interface ApiUser {
-  id: string;
-  email: string;
-  full_name: string;  // API'den gelen field name
-  role: string;
-  employee_number: string;
-  created_at: string;
-}
-
-// Frontend'de kullandığımız normalize edilmiş User type
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  employeeNumber: string;
-  createdAt: string;
-  status: 'Active' | 'Inactive'; // Default status
-}
-
-interface UserFilters {
-  search?: string;
-  role?: string;
-}
-
-// API response'unu frontend formatına çevir
-const normalizeUser = (apiUser: ApiUser): User => ({
-  id: apiUser.id,
-  fullName: apiUser.full_name,
-  email: apiUser.email,
-  role: apiUser.role,
-  employeeNumber: apiUser.employee_number,
-  createdAt: apiUser.created_at,
-  status: 'Active' // Default status (API'de status field'ı yok)
-});
+// API'den gelen User tipini doğrudan kullanıyoruz
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -58,14 +26,35 @@ const Users: React.FC = () => {
     user: null
   });
 
+  // UserEdit Modal state
+  const [editModal, setEditModal] = useState<{ show: boolean; user: User | null }>({ show: false, user: null });
+
+  // API'den gelen kullanıcı verisini frontend tipine dönüştür
+  const mapApiUser = (apiUser: any): User => ({
+    id: apiUser.id,
+    fullName: apiUser.full_name || '',
+    email: apiUser.email || '',
+    role: apiUser.role as UserRole || '',
+    employeeNumber: apiUser.employee_number || '',
+    department: apiUser.department || undefined,
+    departmentId: apiUser.department_id || undefined,
+    createdAt: apiUser.created_at || '',
+    updatedAt: apiUser.updated_at || '',
+    lastLogin: apiUser.last_login || '',
+    isActive: apiUser.is_active ?? undefined,
+    firstName: apiUser.first_name || '',
+    lastName: apiUser.last_name || '',
+    passwordHash: apiUser.password_hash || '',
+    status: apiUser.is_active ? 'Active' : 'Inactive',
+  });
+
   // Kullanıcıları yükle
   const loadUsers = async () => {
     try {
       setLoading(true);
       setError(null);
       const apiUsers = await getAllUsers();
-      const normalizedUsers = apiUsers.map(normalizeUser);
-      setUsers(normalizedUsers);
+      setUsers(apiUsers.map(mapApiUser));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kullanıcılar yüklenemedi');
     } finally {
@@ -80,12 +69,10 @@ const Users: React.FC = () => {
   // Client-side filtreleme (API filtreleme olmadığı için)
   const filteredUsers = users.filter(user => {
     const matchesSearch = !searchTerm || 
-      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.employeeNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = !selectedRole || user.role === selectedRole;
-    
+      (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  user.employeeNumber?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesRole = !selectedRole || (user.role ?? '') === selectedRole;
     return matchesSearch && matchesRole;
   });
 
@@ -141,9 +128,9 @@ const Users: React.FC = () => {
       ...filteredUsers.map(user => [
         user.fullName,
         user.email,
-        getRoleDisplayName(user.role),
-        user.employeeNumber,
-        new Date(user.createdAt).toLocaleDateString('tr-TR')
+  getRoleDisplayName(user.role ?? ''),
+  user.employeeNumber ?? '',
+  user.createdAt ? new Date(user.createdAt).toLocaleDateString('tr-TR') : ''
       ])
     ].map(row => row.join(',')).join('\n');
     
@@ -171,6 +158,14 @@ const Users: React.FC = () => {
       case 'departmentAdmin': return 'Departman Admin';
       case 'User': return 'Kullanıcı';
       default: return role;
+    }
+  };
+
+  // Kullanıcıyı listeden bulup modal aç
+  const openEditModal = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      setEditModal({ show: true, user });
     }
   };
 
@@ -342,8 +337,8 @@ const Users: React.FC = () => {
                         <span className="text-muted">{user.email}</span>
                       </td>
                       <td>
-                        <span className={`badge ${getRoleBadgeColor(user.role)}`}>
-                          {getRoleDisplayName(user.role)}
+                        <span className={`badge ${getRoleBadgeColor(user.role ?? '')}`}>
+                          {getRoleDisplayName(user.role ?? '')}
                         </span>
                       </td>
                       <td>
@@ -351,7 +346,7 @@ const Users: React.FC = () => {
                       </td>
                       <td>
                         <small className="text-muted">
-                          {user.createdAt !== '0001-01-01T02:00:00' ? 
+                          {user.createdAt && user.createdAt !== '0001-01-01T02:00:00' ? 
                             new Date(user.createdAt).toLocaleDateString('tr-TR', {
                               year: 'numeric',
                               month: 'short',
@@ -368,6 +363,13 @@ const Users: React.FC = () => {
                             title="Görüntüle"
                           >
                             <i className="bi bi-eye"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-success btn-sm"
+                            onClick={() => openEditModal(user.id)}
+                            title="Düzenle"
+                          >
+                            <i className="bi bi-pencil"></i>
                           </button>
                           <button
                             className="btn btn-outline-danger btn-sm"
@@ -387,17 +389,30 @@ const Users: React.FC = () => {
         </div>
       </div>
 
+
       {/* UserDetail Modal */}
       <UserDetailModal
         show={userDetailModal.show}
         user={userDetailModal.user}
         onClose={closeUserDetailModal}
-        onEdit={(userId) => {
+        onEdit={(user) => {
           closeUserDetailModal();
-          // TODO: EditUser modal'ını aç veya sayfasına yönlendir
-          console.log('Edit user:', userId);
+          if (user) setEditModal({ show: true, user });
         }}
       />
+
+      {/* UserEdit Modal */}
+      {editModal && editModal.show && editModal.user && (
+        <UserEditModal
+          show={editModal.show}
+          user={editModal.user}
+          onClose={() => setEditModal({ show: false, user: null })}
+          onSuccess={(updatedUser) => {
+            setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+            setEditModal({ show: false, user: null });
+          }}
+        />
+      )}
 
       {/* Delete Modal */}
       {deleteModal.show && deleteModal.user && (

@@ -3,11 +3,11 @@
 // ==============================================
 import type { Department } from '../types/department';
 
-const API_BASE_URL = 'https://localhost:7190/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190';
 
 export const getAllDepartments = async (): Promise<Department[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Departments`, {
+    const response = await fetch(`${API_BASE_URL}/api/Departments`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',

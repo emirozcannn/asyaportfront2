@@ -3,13 +3,18 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
+  employeeNumber?: string;
   departmentId?: string;
-  department?: Department;
-  role?: UserRole;
-  status?: UserStatus;
+  department?: Department | string;
+  role?: UserRole | string;
+  status?: UserStatus | string;
   createdAt?: string;
   updatedAt?: string;
   lastLogin?: string;
+  isActive?: boolean;
+  firstName?: string;
+  lastName?: string;
+  passwordHash?: string;
 }
 
 export interface Department {
