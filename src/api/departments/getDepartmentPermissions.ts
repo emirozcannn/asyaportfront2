@@ -3,7 +3,7 @@
 // ==============================================
 import type { DepartmentCategoryPermission } from '../types/department';
 
-const API_BASE_URL = 'https://localhost:7190/api';
+const API_BASE_URL = 'http://localhost:7190/api';
 
 export const getDepartmentPermissions = async (): Promise<DepartmentCategoryPermission[]> => {
   try {

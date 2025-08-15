@@ -3,7 +3,7 @@
 // ==============================================
 import type { Department, DepartmentStats, SpecificDepartmentStats } from '../types/department';
 
-const API_BASE_URL = 'https://localhost:7190/api';
+const API_BASE_URL = 'http://localhost:7190/api';
 
 // Genel departman istatistikleri
 export const getDepartmentStats = async (): Promise<DepartmentStats> => {
