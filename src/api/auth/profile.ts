@@ -1,5 +1,5 @@
 // src/api/auth/profile.ts
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7190';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export interface User {
   // Backend'den dönen user yapısına göre güncellenecek

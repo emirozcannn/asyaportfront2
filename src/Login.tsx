@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { loginUser } from './api/auth/login';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('bt.mudur@asyaport.com');
   const [password, setPassword] = useState('alper1emir');
   const [error, setError] = useState('');
@@ -25,12 +28,10 @@ const Login = () => {
     };
   }, []);
 
-  // Auto-fill from remembered email (React state version)
+  // Auto-fill from remembered email
   useEffect(() => {
-    // Claude.ai artifact'da localStorage simülasyonu
-    // Gerçek projede localStorage kullanılabilir
-    const savedEmail = 'bt.mudur@asyaport.com';
-    const savedRemember = true;
+    const savedEmail = localStorage.getItem('rememberEmail');
+    const savedRemember = localStorage.getItem('rememberMe') === 'true';
     
     if (savedEmail && savedRemember) {
       setEmail(savedEmail);
@@ -38,7 +39,7 @@ const Login = () => {
     }
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -55,40 +56,24 @@ const Login = () => {
     }
     
     try {
-      console.log('Attempting login with:', { email, password: '***' });
+      console.log('=== FORM SUBMIT HANDLER ===');
+      console.log('Email from form:', email);
+      console.log('Password length from form:', password?.length);
+      console.log('Calling loginUser function...');
       
-      // Simulate API call
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (email === 'bt.mudur@asyaport.com' && password === 'alper1emir') {
-            resolve({
-              token: 'mock-token-123',
-              user: {
-                id: 1,
-                email: email,
-                firstName: 'Test',
-                lastName: 'User',
-                role: 'admin',
-                departmentId: 1,
-                employeeNumber: '001',
-                isActive: true
-              }
-            });
-          } else {
-            reject(new Error('Invalid credentials'));
-          }
-        }, 2000);
-      });
+      // Gerçek API çağrısı
+      const response = await loginUser(email, password);
       
-      console.log('Login successful');
+      console.log('Login API response:', response);
       
-      // Handle remember me (gerçek projede localStorage kullanın)
+      // Handle remember me
       if (rememberMe) {
-        console.log('Remembering user email');
+        localStorage.setItem('rememberEmail', email);
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberEmail');
+        localStorage.removeItem('rememberMe');
       }
-      
-      // Store auth info (gerçek projede localStorage kullanın)
-      console.log('Storing user info');
       
       // Set success state
       setLoginSuccess(true);
@@ -96,8 +81,7 @@ const Login = () => {
       // Navigate to dashboard after a brief delay
       setTimeout(() => {
         console.log('Redirecting to dashboard...');
-        // Gerçek projede: navigate('/dashboard');
-        window.location.href = '/dashboard';
+        navigate('/dashboard');
       }, 1500);
       
     } catch (err) {
@@ -105,18 +89,8 @@ const Login = () => {
       
       let errorMessage = 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
       
-      if (err?.message) {
-        if (err.message.includes('500')) {
-          errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
-        } else if (err.message.includes('401') || err.message.includes('Invalid')) {
-          errorMessage = 'Email veya şifre hatalı.';
-        } else if (err.message.includes('Network')) {
-          errorMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
-        } else if (err.message.includes('timeout')) {
-          errorMessage = 'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.';
-        } else {
-          errorMessage = err.message;
-        }
+      if (err instanceof Error) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
